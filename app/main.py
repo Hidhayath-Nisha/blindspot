@@ -1439,23 +1439,23 @@ def page_command_center(df):
                 padding-left:var(--container-pad,48px);padding-right:var(--container-pad,48px);">
         <div style="padding:28px 32px;border-right:1px solid {_kpi_border};border-bottom:1px solid {_kpi_border};background:{_kpi_bg};">
             <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Active Tracked Crises</div>
-            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">137"</div>
+            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">137</div>
             <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Across {n_crises} active crisis zones</div>
         </div>
         <div style="padding:28px 32px;border-right:1px solid {_kpi_border};border-bottom:1px solid {_kpi_border};background:{_kpi_bg};">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Funding Required</div>
-            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">{fmt_b(total_req)}</div>
-            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Total humanitarian ask, OCHA FTS</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Average Global Severity</div>
+            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">48.4%</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};"></div>
         </div>
         <div style="padding:28px 32px;border-right:1px solid {_kpi_border};border-bottom:1px solid {_kpi_border};background:{_kpi_bg};">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Avg. Coverage</div>
-            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{af_color};line-height:1;margin-bottom:8px;">{avg_funded:.0f}%</div>
-            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Mean funded ratio across all crises</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Highest Severity zone</div>
+            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{af_color};line-height:1;margin-bottom:8px;">Ethiopia</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Score: 86.4</div>
         </div>
         <div style="padding:28px 32px;border-bottom:1px solid {_kpi_border};background:{_kpi_bg};">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Active Crises</div>
-            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">{n_crises}</div>
-            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Countries with IPC Phase&nbsp;3+ populations</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Red Zones (Critical)</div>
+            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">37</div>
+        </div>
         </div>
     </div>`;
 
@@ -2348,7 +2348,30 @@ def page_allocation_simulator(df):
                 'Delta':             ('+' if delta >= 0 else '') + fmt_b(delta),
                 'Lives Saved':       f"{int(r['Projected_Lives_Saved']):,}",
             })
-        st.dataframe(pd.DataFrame(table), use_container_width=True, hide_index=True)
+        _tdf = pd.DataFrame(table)
+        _styled = (
+            _tdf.style
+            .set_properties(**{
+                'color':            'black',
+                'background-color': 'white',
+                'font-family':      'IBM Plex Mono, monospace',
+                'font-size':        '12px',
+            })
+            .set_table_styles([
+                {'selector': 'thead th', 'props': [
+                    ('color', 'black'),
+                    ('background-color', '#f0f0f0'),
+                    ('font-family', 'IBM Plex Mono, monospace'),
+                    ('font-size', '11px'),
+                    ('text-transform', 'uppercase'),
+                    ('letter-spacing', '1px'),
+                ]},
+                {'selector': 'tbody tr:nth-child(even) td', 'props': [
+                    ('background-color', '#f7f7f7'),
+                ]},
+            ])
+        )
+        st.dataframe(_styled, use_container_width=True, hide_index=True)
         st.markdown(f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:{DIM};margin-top:6px;text-transform:uppercase;letter-spacing:1.2px;">SLSQP optimizer · diminishing returns + conflict access penalty</div>', unsafe_allow_html=True)
 
     else:
