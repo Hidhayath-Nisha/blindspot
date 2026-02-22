@@ -2769,13 +2769,16 @@ components.html(f"""
             this.style.transform  = 'scale(1)';
         }});
         fab.addEventListener('click', function() {{
+            // Primary: find by data-bs-key tag (set by navbar script)
             var btns2 = P.querySelectorAll('button');
             for (var j = 0; j < btns2.length; j++) {{
-                var t2 = (btns2[j].innerText || btns2[j].textContent || '').trim();
-                if (t2 === '◎ AI Agent' || t2 === '✕ Close Chat') {{
+                if (btns2[j].getAttribute('data-bs-key') === 'nav_chat') {{
                     btns2[j].click(); return;
                 }}
             }}
+            // Fallback: nav_chat is index 4 in the hidden sidebar buttons
+            var stBtns2 = P.querySelectorAll('[data-testid="stButton"] button');
+            if (stBtns2[4]) {{ stBtns2[4].click(); return; }}
         }});
         P.body.appendChild(fab);
     }} else {{
