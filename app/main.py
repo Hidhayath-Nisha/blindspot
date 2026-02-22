@@ -141,11 +141,22 @@ st.markdown("""
 
 /* ── CHROME REMOVAL ── */
 #MainMenu, header, footer, [data-testid="stToolbar"],
-[data-testid="stDecoration"], [data-testid="stSidebar"],
+[data-testid="stDecoration"],
 [data-testid="collapsedControl"], .stDeployButton,
 [data-testid="manage-app-button"] {
     visibility: hidden !important;
     display: none !important;
+}
+/* Sidebar hidden visually but kept interactive for JS programmatic clicks */
+[data-testid="stSidebar"] {
+    position: fixed !important;
+    left: -9999px !important;
+    top: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    z-index: -1 !important;
 }
 /* ── LAYOUT CONTAINER SYSTEM ── */
 :root {
@@ -1158,39 +1169,47 @@ def render_navbar(df):
     return sep;
   }}
 
+  // Keys in sidebar order (must match _btn_defs in Python)
+  var NAV_KEYS = ['nav_home','nav_cd','nav_alloc','nav_meth','nav_chat','nav_theme'];
+
+  function getSidebarBtns(doc) {{
+    // All our routing buttons live exclusively in the sidebar
+    return doc.querySelectorAll('[data-testid="stSidebar"] [data-testid="stButton"] button');
+  }}
+
+  function tagBtns(doc) {{
+    var btns = getSidebarBtns(doc);
+    for (var i = 0; i < Math.min(btns.length, NAV_KEYS.length); i++) {{
+      btns[i].setAttribute('data-bs-key', NAV_KEYS[i]);
+    }}
+  }}
+
   function clickHiddenBtn(doc, key) {{
-    // Streamlit renders button with a data-testid structure; find by text '·'
-    // We stored real keys in aria-label via our hidden column pattern
+    // Primary: sidebar-specific, index-stable lookup
+    var sBtns = getSidebarBtns(doc);
+    var idx = NAV_KEYS.indexOf(key);
+    if (idx !== -1 && sBtns[idx]) {{
+      sBtns[idx].click();
+      return;
+    }}
+    // Secondary: data-bs-key attribute (surviving from last tagBtns call)
     var allBtns = doc.querySelectorAll('button');
     for (var i = 0; i < allBtns.length; i++) {{
-      var ariaLabel = allBtns[i].getAttribute('aria-label') || '';
-      var testId    = (allBtns[i].closest('[data-testid="stButton"]') || {{}});
-      // Match by key stored in .element-container data attribute if possible,
-      // otherwise fall back to finding the button by its parent key div
-      var keyDiv = allBtns[i].closest('[data-testid="column"]');
-      // Simpler: match by order of our hidden buttons using index stored in data-bs-key
       if (allBtns[i].getAttribute('data-bs-key') === key) {{
         allBtns[i].click();
         return;
       }}
     }}
-    // Fallback: find by scanning Streamlit stButton key pattern in DOM
-    var stBtns = doc.querySelectorAll('[data-testid="stButton"] button');
-    var keyMap = {{ 'nav_home':0, 'nav_cd':1, 'nav_alloc':2, 'nav_meth':3, 'nav_chat':4, 'nav_theme':5 }};
-    var idx = keyMap[key];
-    if (idx !== undefined && stBtns[idx]) {{
-      stBtns[idx].click();
-    }}
   }}
 
-  // Tag the hidden Streamlit buttons with data-bs-key for reliable lookup
-  setTimeout(function() {{
-    var stBtns = P.querySelectorAll('[data-testid="stButton"] button');
-    var keys = ['nav_home','nav_cd','nav_alloc','nav_meth','nav_chat','nav_theme'];
-    for (var i = 0; i < Math.min(stBtns.length, keys.length); i++) {{
-      stBtns[i].setAttribute('data-bs-key', keys[i]);
-    }}
-  }}, 300);
+  // Tag immediately + re-tag whenever sidebar DOM changes (survives Streamlit reruns)
+  tagBtns(P);
+  setTimeout(function() {{ tagBtns(P); }}, 400);
+  var _obs = new MutationObserver(function() {{ tagBtns(P); }});
+  var _sidebar = P.querySelector('[data-testid="stSidebar"]');
+  if (_sidebar) _obs.observe(_sidebar, {{childList:true, subtree:true}});
+  // Also watch body in case sidebar appears after initial render
+  _obs.observe(P.body, {{childList:true, subtree:false}});
 }})();
 </script>
 """, height=0, scrolling=False)
@@ -2769,16 +2788,16 @@ components.html(f"""
             this.style.transform  = 'scale(1)';
         }});
         fab.addEventListener('click', function() {{
-            // Primary: find by data-bs-key tag (set by navbar script)
-            var btns2 = P.querySelectorAll('button');
-            for (var j = 0; j < btns2.length; j++) {{
-                if (btns2[j].getAttribute('data-bs-key') === 'nav_chat') {{
-                    btns2[j].click(); return;
+            // Sidebar-specific: nav_chat is always index 4 (0-based)
+            var sBtns = P.querySelectorAll('[data-testid="stSidebar"] [data-testid="stButton"] button');
+            if (sBtns[4]) {{ sBtns[4].click(); return; }}
+            // Fallback: data-bs-key attribute
+            var allBtns = P.querySelectorAll('button');
+            for (var j = 0; j < allBtns.length; j++) {{
+                if (allBtns[j].getAttribute('data-bs-key') === 'nav_chat') {{
+                    allBtns[j].click(); return;
                 }}
             }}
-            // Fallback: nav_chat is index 4 in the hidden sidebar buttons
-            var stBtns2 = P.querySelectorAll('[data-testid="stButton"] button');
-            if (stBtns2[4]) {{ stBtns2[4].click(); return; }}
         }});
         P.body.appendChild(fab);
     }} else {{
