@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+.venv/
+databricks/venv/
+*.egg-info/
+
+# Environment
+.env
+
+# Large raw data files (use Databricks Unity Catalog in production)
+assets/Dataset3-ucdp_ged.csv
+assets/ProjectSummaryWithLocationAndCluster20260221050845979.csv
+
+# macOS
+.DS_Store
+
+# Gemini agent
+.gemini/
