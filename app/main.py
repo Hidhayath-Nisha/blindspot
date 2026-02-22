@@ -141,13 +141,9 @@ st.markdown("""
 
 /* ── CHROME REMOVAL ── */
 #MainMenu, header, footer, [data-testid="stToolbar"],
-[data-testid="stDecoration"],
+[data-testid="stDecoration"], [data-testid="stSidebar"],
 [data-testid="collapsedControl"], .stDeployButton,
 [data-testid="manage-app-button"] {
-    visibility: hidden !important;
-    display: none !important;
-}
-[data-testid="stSidebar"] {
     visibility: hidden !important;
     display: none !important;
 }
@@ -580,20 +576,6 @@ for key, default in [
     if key not in st.session_state:
         st.session_state[key] = default
 
-# ── Handle navbar actions sent via URL query param (JS → Python bridge) ──
-_bs_action = st.query_params.get('_bs_action', '')
-if _bs_action:
-    st.query_params.clear()
-    if _bs_action.startswith('page__'):
-        st.session_state.page = _bs_action[6:]
-    elif _bs_action == 'chat_toggle':
-        st.session_state.chat_open = not st.session_state.chat_open
-    elif _bs_action == 'theme_toggle':
-        _nt = 'light' if st.session_state.get('theme', 'dark') == 'dark' else 'dark'
-        st.session_state['theme'] = _nt
-        st.session_state['dark_mode'] = (_nt == 'dark')
-    st.rerun()
-
 # Keep dark_mode and theme in sync (theme is the canonical key)
 if st.session_state.get('theme') == 'light':
     st.session_state['dark_mode'] = False
@@ -1005,6 +987,28 @@ def render_navbar(df):
     theme_icon = "☀" if is_light else "☾"
     cur_page   = st.session_state.get('page', 'command_center')
 
+    # ── Hidden routing buttons — placed in sidebar (CSS-hidden, zero page space) ──
+    with st.sidebar:
+        _btn_defs = [
+            ("command_center",       "nav_home"),
+            ("crisis_detail",        "nav_cd"),
+            ("allocation_simulator", "nav_alloc"),
+            ("methodology",          "nav_meth"),
+            ("chat_toggle",          "nav_chat"),
+            ("theme_toggle",         "nav_theme"),
+        ]
+        for action, key in _btn_defs:
+            if st.button("·", key=key):
+                if action == "chat_toggle":
+                    st.session_state.chat_open = not st.session_state.chat_open
+                elif action == "theme_toggle":
+                    new_t = 'light' if st.session_state.get('theme','dark') == 'dark' else 'dark'
+                    st.session_state['theme']     = new_t
+                    st.session_state['dark_mode'] = (new_t == 'dark')
+                else:
+                    st.session_state.page = action
+                st.rerun()
+
     # ── Floating pill navbar injected into parent document via components.html ──
     chat_label  = "✕ Chat" if st.session_state.chat_open else "AI Chat"
     _page_json  = cur_page  # current active page for JS active-state highlight
@@ -1110,34 +1114,23 @@ def render_navbar(df):
   var pill = P.createElement('div');
   pill.id = 'bs-pill-nav';
 
-  // ── Navigation action: set ?_bs_action= URL param → Python reads & reruns ──
-  function navTo(action) {{
-    window.parent.location.search = '?_bs_action=' + action + '&_t=' + Date.now();
-  }}
-
   // Logo (click → dashboard)
   var logo = P.createElement('div');
   logo.className = 'bsp-logo';
   logo.innerHTML = 'BLIND<em>SPOT</em>';
   logo.title = 'Go to Dashboard';
-  logo.addEventListener('click', function() {{ navTo('page__command_center'); }});
+  logo.addEventListener('click', function() {{ clickHiddenBtn(P, 'nav_home'); }});
   pill.appendChild(logo);
 
   // Separator
   pill.appendChild(makeSep(P));
 
   // Nav items
-  var pageMap = {{
-    'command_center':      'page__command_center',
-    'crisis_detail':       'page__crisis_detail',
-    'allocation_simulator':'page__allocation_simulator',
-    'methodology':         'page__methodology',
-  }};
   pages.forEach(function(pg) {{
     var btn = P.createElement('button');
     btn.className = 'bsp-item' + (curPage === pg[0] ? ' bsp-active' : '');
     btn.textContent = pg[1];
-    btn.addEventListener('click', (function(action){{ return function(){{ navTo(action); }}; }})(pageMap[pg[0]] || ('page__'+pg[0])));
+    btn.addEventListener('click', function() {{ clickHiddenBtn(P, pg[2]); }});
     pill.appendChild(btn);
   }});
 
@@ -1146,7 +1139,7 @@ def render_navbar(df):
   var chatBtn = P.createElement('button');
   chatBtn.className = 'bsp-item';
   chatBtn.textContent = '{chat_label}';
-  chatBtn.addEventListener('click', function() {{ navTo('chat_toggle'); }});
+  chatBtn.addEventListener('click', function() {{ clickHiddenBtn(P, 'nav_chat'); }});
   pill.appendChild(chatBtn);
 
   // Theme toggle
@@ -1154,7 +1147,7 @@ def render_navbar(df):
   tog.className = 'bsp-toggle';
   tog.innerHTML = '{theme_icon}';
   tog.title = isLight ? 'Switch to dark mode' : 'Switch to light mode';
-  tog.addEventListener('click', function() {{ navTo('theme_toggle'); }});
+  tog.addEventListener('click', function() {{ clickHiddenBtn(P, 'nav_theme'); }});
   pill.appendChild(tog);
 
   P.body.appendChild(pill);
@@ -1165,6 +1158,39 @@ def render_navbar(df):
     return sep;
   }}
 
+  function clickHiddenBtn(doc, key) {{
+    // Streamlit renders button with a data-testid structure; find by text '·'
+    // We stored real keys in aria-label via our hidden column pattern
+    var allBtns = doc.querySelectorAll('button');
+    for (var i = 0; i < allBtns.length; i++) {{
+      var ariaLabel = allBtns[i].getAttribute('aria-label') || '';
+      var testId    = (allBtns[i].closest('[data-testid="stButton"]') || {{}});
+      // Match by key stored in .element-container data attribute if possible,
+      // otherwise fall back to finding the button by its parent key div
+      var keyDiv = allBtns[i].closest('[data-testid="column"]');
+      // Simpler: match by order of our hidden buttons using index stored in data-bs-key
+      if (allBtns[i].getAttribute('data-bs-key') === key) {{
+        allBtns[i].click();
+        return;
+      }}
+    }}
+    // Fallback: find by scanning Streamlit stButton key pattern in DOM
+    var stBtns = doc.querySelectorAll('[data-testid="stButton"] button');
+    var keyMap = {{ 'nav_home':0, 'nav_cd':1, 'nav_alloc':2, 'nav_meth':3, 'nav_chat':4, 'nav_theme':5 }};
+    var idx = keyMap[key];
+    if (idx !== undefined && stBtns[idx]) {{
+      stBtns[idx].click();
+    }}
+  }}
+
+  // Tag the hidden Streamlit buttons with data-bs-key for reliable lookup
+  setTimeout(function() {{
+    var stBtns = P.querySelectorAll('[data-testid="stButton"] button');
+    var keys = ['nav_home','nav_cd','nav_alloc','nav_meth','nav_chat','nav_theme'];
+    for (var i = 0; i < Math.min(stBtns.length, keys.length); i++) {{
+      stBtns[i].setAttribute('data-bs-key', keys[i]);
+    }}
+  }}, 300);
 }})();
 </script>
 """, height=0, scrolling=False)
@@ -1411,6 +1437,7 @@ def page_command_center(df):
   <span class="lc" style="background:#F0A500"></span>Elevated (40–60)&nbsp;&nbsp;
   <span class="lc" style="background:#0DB37A"></span>Moderate (20–40)&nbsp;&nbsp;
   <span class="lc" style="background:#2D74DA"></span>Low (&lt;20)
+  &nbsp;&nbsp;·&nbsp;&nbsp; scroll to zoom &nbsp;·&nbsp; click marker to zoom in &nbsp;·&nbsp; double-click to reset
 </div>
 <script src="https://cdn.jsdelivr.net/npm/globe.gl@2/dist/globe.gl.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
@@ -1445,9 +1472,15 @@ const world = Globe()(cont)
         '<b style="color:{_globe_tip_text};font-size:13px">' + pt.name + '</b><br>' +
         'Severity &nbsp;<span style="color:' + pt.color + '">' + pt.sev + '/100</span><br>' +
         'Funded &nbsp;&nbsp;<span style="color:{_globe_legend_c}">' + pt.funded + '%</span><br>' +
-        'People &nbsp;&nbsp;<span style="color:{_globe_legend_c}">' + pt.people + '</span>';
+        'People &nbsp;&nbsp;<span style="color:{_globe_legend_c}">' + pt.people + '</span><br>' +
+        '<span style="color:{_globe_legend_c};font-size:10px;">click to zoom in</span>';
     }} else {{
       tip.style.display = 'none';
+    }}
+  }})
+  .onPointClick((pt) => {{
+    if (pt) {{
+      world.pointOfView({{ lat: pt.lat, lng: pt.lng, altitude: 0.8 }}, 800);
     }}
   }});
 
@@ -1495,6 +1528,16 @@ controls.zoomSpeed       = 1.2;
 controls.minDistance     = 150;
 controls.maxDistance     = 700;
 
+// ── Fix: capture wheel events so scroll zoom works inside the iframe ──
+cont.addEventListener('wheel', e => {{
+  e.stopPropagation();
+}}, {{ passive: false }});
+
+// ── Fix: reset view on double-click ──
+cont.addEventListener('dblclick', () => {{
+  world.pointOfView({{ lat: 20, lng: 20, altitude: 2.6 }}, 600);
+}});
+
 let overGlobe = false;
 cont.addEventListener('mouseenter', () => {{ overGlobe = true; }});
 cont.addEventListener('mouseleave', () => {{
@@ -1503,7 +1546,10 @@ cont.addEventListener('mouseleave', () => {{
 }});
 
 let _isDragging = false;
-cont.addEventListener('mousedown', () => {{ _isDragging = true; }});
+cont.addEventListener('mousedown', () => {{
+  _isDragging = true;
+  controls.autoRotate = false;  // stop spinning when user takes control
+}});
 cont.addEventListener('mouseup',   () => {{ _isDragging = false; }});
 
 cont.addEventListener('mousemove', e => {{
@@ -2515,10 +2561,9 @@ def render_chat(df):
     if not st.session_state.messages:
         st.session_state.messages.append({
             "role": "assistant",
-            "content": (f"BLINDSPOT AI online. {top_name} is the current highest-severity zone "
-                        f"({top_score:.0f}/100). Ask me anything — about the platform, pages, "
-                        f"dataset, methodology, optimizer, how the severity scores work, "
-                        f"specific countries, or what any number means.")
+            "content": (f"BLINDSPOT AI online. {top_name} is the highest-severity zone "
+                        f"({top_score:.0f}/100). Ask about any crisis, the methodology, or "
+                        f"allocation data.")
         })
 
     st.markdown(f'<hr style="border-color:{_chat_border};margin:0;">', unsafe_allow_html=True)
@@ -2526,7 +2571,7 @@ def render_chat(df):
     <div style="background:{_chat_bg};border-top:1px solid {_chat_border};padding:14px 0 8px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_chat_text};text-transform:uppercase;letter-spacing:2px;">◎ BLINDSPOT AI Agent</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:{_chat_dim};text-transform:uppercase;letter-spacing:1.5px;">Gemini 2.5 Flash · Native Chat API · Multi-turn</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:{_chat_dim};text-transform:uppercase;letter-spacing:1.5px;">Gemini 2.5 Flash · Domain-restricted</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -2551,7 +2596,7 @@ def render_chat(df):
     with st.form("chat_form", clear_on_submit=True):
         ci1, ci2 = st.columns([6, 1])
         with ci1:
-            prompt = st.text_input("Message", placeholder="Ask about the platform, data, methodology, a country, how the optimizer works...",
+            prompt = st.text_input("Message", placeholder="Ask about any crisis, methodology, or funding data...",
                                    label_visibility="collapsed", key="chat_input")
         with ci2:
             send = st.form_submit_button("Send", use_container_width=True)
@@ -2565,95 +2610,26 @@ def render_chat(df):
         else:
             try:
                 from google import genai
-                from google.genai import types as gtypes
-
                 client = genai.Client(api_key=api_key)
+                summary = df[['iso3', 'Crisis_Severity_Score', 'funding_required', 'funding_received']].head(8).to_string() if not df.empty else ""
+                sys_p = f"""You are BLINDSPOT AI, an analytical assistant for humanitarian resource allocation intelligence.
+Rules:
+1. Only answer questions about humanitarian crises, funding allocation, severity scores, this system's methodology, or its data.
+2. No code, no creative writing, no general knowledge.
+3. If unrelated: "BLINDSPOT AI is restricted to humanitarian crisis analysis."
+4. Be precise, quantitative, factual. No emojis. Concise.
 
-                # ── Build live data context ──────────────────────────────────
-                total_crises  = len(df)
-                red_zones     = int((df['Crisis_Severity_Score'] > 75).sum()) if not df.empty else 0
-                total_gap_bn  = round(df['funding_gap'].sum() / 1e9, 1) if 'funding_gap' in df.columns and not df.empty else 0
-                top5 = df.nlargest(5, 'Crisis_Severity_Score')[['Country_Name','Crisis_Severity_Score','funding_required','funding_received']].to_string(index=False) if not df.empty else ""
-                all_countries = ", ".join(sorted(df['Country_Name'].tolist())) if not df.empty else ""
-
-                sys_p = f"""You are BLINDSPOT AI, the intelligent assistant embedded in the BLINDSPOT humanitarian crisis intelligence platform.
-
-== PRODUCT KNOWLEDGE ==
-BLINDSPOT is built for the Databricks × UN Hackathon. It helps humanitarian donors, journalists, and UN coordinators make data-driven resource allocation decisions.
-
-PAGES & FEATURES:
-1. Dashboard (Command Center): Global crisis map with every country scored red/amber/green by severity. KPI cards show total crises, red zones, funding gap. Clicking a country navigates to the Crisis Detail page.
-2. Crisis Deep Dive: Drill into any country. Shows 3 audience-specific AI briefs (Donor ROI pitch · Journalist story angle · UN operational brief) generated by Gemini 2.5 Flash using live crisis data. Also shows RAG-powered "What Worked Before" section from historical interventions via Actian VectorAI.
-3. Aid Allocator (Budget Optimizer): User sets a budget ($5M–$100M). SLSQP constrained optimization (SciPy) allocates across all active underfunded crises to maximize projected lives saved, using a diminishing returns curve and conflict-access penalty. Shows a full allocation table and Sankey charts comparing current vs optimal allocation.
-4. Help & Features (Methodology): Explains the full data pipeline — IPC food insecurity data, OCHA FTS funding data, UCDP GED fatality data, IDMC displacement data — all fed into an XGBoost severity scoring model. Also documents the AI brief system and optimizer.
-
-TECH STACK:
-- Frontend: Streamlit + Plotly
-- ML model: XGBoost (trained on IPC, OCHA, UCDP, IDMC data) — outputs Crisis_Severity_Score (0–100)
-- Optimizer: SciPy SLSQP constrained optimization — maximizes Projected_Lives_Saved given a budget constraint
-- AI Briefs: Google Gemini 2.5 Flash (via google-genai SDK)
-- Vector RAG: Actian VectorAI for historical intervention retrieval
-- Data pipeline: Databricks SQL + Delta Lake
-- Fallback data: xgboost_output.csv (137 countries, 25 columns)
-
-DATASET COLUMNS (xgboost_output.csv):
-iso3, funding_required, funding_received, ipc_phase_3_plus, fatalities, Country_Name, Lat, Lon, funding_gap, funding_gap_normalized, total_affected, log_affected, log_fatalities, log_food_insecure, fatalities_score, food_score, gap_score, affected_score, severity_target, Crisis_Severity_Score, coverage_ratio, Is_Red_Zone, Funding_Coverage_Ratio, Optimal_Allocation_USD, Projected_Lives_Saved
-
-SCORING MODEL:
-Crisis_Severity_Score = weighted composite of fatalities_score + food_score + gap_score + affected_score (all normalized 0–100). Red Zone = score > 75. XGBoost trained on historical crisis outcomes.
-
-OPTIMIZER LOGIC:
-- Filters: Crisis_Severity_Score > 10 AND funding_required > funding_received
-- Objective: Maximize sum of diminishing_returns_curve(allocation, base_capacity, access_penalty)
-- Constraints: total allocation ≤ budget, each country allocation ≥ 0
-- Fallback: If SLSQP fails, scales pre-computed Optimal_Allocation_USD proportionally to selected budget
-
-== LIVE DATA SNAPSHOT ==
-Active crises tracked: {total_crises}
-Red zones (severity > 75): {red_zones}
-Total global funding gap: ~${total_gap_bn}B USD
-Highest severity: {top_name} ({top_score:.0f}/100)
-
-Top 5 crises by severity:
-{top5}
-
-All tracked countries: {all_countries}
-
-== RULES ==
-1. Answer any question about BLINDSPOT — its pages, features, data, methodology, tech stack, how to use it, what the numbers mean, or humanitarian crisis context.
-2. For specific country questions, use the live data above or explain methodology when exact data isn't available.
-3. If a question is completely unrelated to BLINDSPOT or humanitarian analysis (e.g. "write me a poem"), politely redirect: "I'm BLINDSPOT AI — ask me anything about the platform, the data, or the crises we track."
-4. Be precise, factual, and concise. No emojis. Use numbers when you have them.
-5. Keep answers under 200 words unless a detailed explanation is clearly needed."""
-
-                # ── Build native Gemini history from session messages ────────
-                # Skip index 0 (welcome msg) and the last msg (current user prompt)
-                history_gemini = []
-                for m in st.session_state.messages[1:-1]:
-                    role = "user" if m['role'] == 'user' else "model"
-                    history_gemini.append(
-                        gtypes.Content(role=role, parts=[gtypes.Part(text=m['content'])])
-                    )
-
-                # ── Create native Gemini chat session ────────────────────────
-                chat_session = client.chats.create(
+Context:
+- Highest severity: {top_name} (Score: {top_score:.0f}/100)
+- Active crises: {len(df)}
+- Sources: OCHA FTS, IPC, UCDP GED, IDMC
+Top data:
+{summary}"""
+                resp = client.models.generate_content(
                     model="gemini-2.5-flash",
-                    config=gtypes.GenerateContentConfig(
-                        system_instruction=sys_p,
-                        temperature=0.4,
-                        max_output_tokens=600,
-                    ),
-                    history=history_gemini,
+                    contents=f"{sys_p}\n\nUser: {prompt}"
                 )
-
-                # ── Stream response, collect chunks ──────────────────────────
-                full_response = ""
-                with st.spinner("BLINDSPOT AI thinking..."):
-                    for chunk in chat_session.send_message_stream(prompt):
-                        if chunk.text:
-                            full_response += chunk.text
-
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
+                st.session_state.messages.append({"role": "assistant", "content": resp.text})
                 st.rerun()
             except Exception as e:
                 err = str(e)
@@ -2743,7 +2719,13 @@ components.html(f"""
             this.style.transform  = 'scale(1)';
         }});
         fab.addEventListener('click', function() {{
-            window.parent.location.search = '?_bs_action=chat_toggle&_t=' + Date.now();
+            var btns2 = P.querySelectorAll('button');
+            for (var j = 0; j < btns2.length; j++) {{
+                var t2 = (btns2[j].innerText || btns2[j].textContent || '').trim();
+                if (t2 === '◎ AI Agent' || t2 === '✕ Close Chat') {{
+                    btns2[j].click(); return;
+                }}
+            }}
         }});
         P.body.appendChild(fab);
     }} else {{
