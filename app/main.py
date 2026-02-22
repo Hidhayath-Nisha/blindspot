@@ -998,7 +998,7 @@ def render_navbar(df):
             ("theme_toggle",         "nav_theme"),
         ]
         for action, key in _btn_defs:
-            if st.button("·", key=key):
+            if st.button(key, key=key):
                 if action == "chat_toggle":
                     st.session_state.chat_open = not st.session_state.chat_open
                 elif action == "theme_toggle":
@@ -1093,10 +1093,7 @@ def render_navbar(df):
     [data-testid="stMain"] .block-container {{ padding-top: 64px !important; }}
     /* hide the Streamlit routing button rows */
     .bs-hidden-nav {{ display:none !important; }}
-    [data-testid="stMarkdown"]:has(.bs-nav-routing-marker) {{
-      display:none !important; height:0 !important; margin:0 !important; overflow:hidden !important;
-    }}
-    [data-testid="stMarkdown"]:has(.bs-nav-routing-marker) + [data-testid="stHorizontalBlock"] {{
+    [data-testid="stSidebar"] [data-testid="stButton"] {{
       display:none !important; height:0 !important; margin:0 !important; overflow:hidden !important;
     }}
   `;
@@ -1159,38 +1156,15 @@ def render_navbar(df):
   }}
 
   function clickHiddenBtn(doc, key) {{
-    // Streamlit renders button with a data-testid structure; find by text '·'
-    // We stored real keys in aria-label via our hidden column pattern
     var allBtns = doc.querySelectorAll('button');
     for (var i = 0; i < allBtns.length; i++) {{
-      var ariaLabel = allBtns[i].getAttribute('aria-label') || '';
-      var testId    = (allBtns[i].closest('[data-testid="stButton"]') || {{}});
-      // Match by key stored in .element-container data attribute if possible,
-      // otherwise fall back to finding the button by its parent key div
-      var keyDiv = allBtns[i].closest('[data-testid="column"]');
-      // Simpler: match by order of our hidden buttons using index stored in data-bs-key
-      if (allBtns[i].getAttribute('data-bs-key') === key) {{
+      var t = (allBtns[i].innerText || allBtns[i].textContent || '').trim();
+      if (t === key) {{
         allBtns[i].click();
         return;
       }}
     }}
-    // Fallback: find by scanning Streamlit stButton key pattern in DOM
-    var stBtns = doc.querySelectorAll('[data-testid="stButton"] button');
-    var keyMap = {{ 'nav_home':0, 'nav_cd':1, 'nav_alloc':2, 'nav_meth':3, 'nav_chat':4, 'nav_theme':5 }};
-    var idx = keyMap[key];
-    if (idx !== undefined && stBtns[idx]) {{
-      stBtns[idx].click();
-    }}
   }}
-
-  // Tag the hidden Streamlit buttons with data-bs-key for reliable lookup
-  setTimeout(function() {{
-    var stBtns = P.querySelectorAll('[data-testid="stButton"] button');
-    var keys = ['nav_home','nav_cd','nav_alloc','nav_meth','nav_chat','nav_theme'];
-    for (var i = 0; i < Math.min(stBtns.length, keys.length); i++) {{
-      stBtns[i].setAttribute('data-bs-key', keys[i]);
-    }}
-  }}, 300);
 }})();
 </script>
 """, height=0, scrolling=False)
