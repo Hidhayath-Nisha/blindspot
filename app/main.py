@@ -2138,6 +2138,43 @@ def page_allocation_simulator(df):
         df_opt = st.session_state.opt_result.copy()
         df_opt['Country_Name'] = df_opt['iso3'].map(COUNTRY_NAMES).fillna(df_opt['iso3'])
 
+        # Comparison table (above charts)
+        st.markdown('<span class="section-label">Allocation Analysis · All active underfunded crises</span>', unsafe_allow_html=True)
+        table = []
+        for _, r in df_opt.sort_values('Crisis_Severity_Score', ascending=False).iterrows():
+            table.append({
+                'Country':           r['Country_Name'],
+                'Severity':          f"{r['Crisis_Severity_Score']:.0f}",
+                'Current Funding':   fmt_b(r['funding_received']),
+                'Optimal Allocation':fmt_b(r['Optimal_Allocation_USD']),
+                'Lives Saved':       f"{int(r['Projected_Lives_Saved']):,}",
+            })
+        _tdf = pd.DataFrame(table)
+        _styled = (
+            _tdf.style
+            .set_properties(**{
+                'color':            'black',
+                'background-color': 'white',
+                'font-family':      'IBM Plex Mono, monospace',
+                'font-size':        '12px',
+            })
+            .set_table_styles([
+                {'selector': 'thead th', 'props': [
+                    ('color', 'black'),
+                    ('background-color', '#f0f0f0'),
+                    ('font-family', 'IBM Plex Mono, monospace'),
+                    ('font-size', '11px'),
+                    ('text-transform', 'uppercase'),
+                    ('letter-spacing', '1px'),
+                ]},
+                {'selector': 'tbody tr:nth-child(even) td', 'props': [
+                    ('background-color', '#f7f7f7'),
+                ]},
+            ])
+        )
+        st.dataframe(_styled, use_container_width=True, hide_index=True)
+        st.markdown(f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:{DIM};margin-top:6px;margin-bottom:32px;text-transform:uppercase;letter-spacing:1.2px;">SLSQP optimizer · diminishing returns + conflict access penalty</div>', unsafe_allow_html=True)
+
         # Sankey
         sk_l, sk_r = st.columns(2, gap="medium")
         df_top = df_opt.nlargest(8, 'Optimal_Allocation_USD')
@@ -2178,45 +2215,6 @@ def page_allocation_simulator(df):
             oa = df_top['Optimal_Allocation_USD'].clip(lower=0).tolist()
             if sum(oa) == 0: oa = [budget_m * 1e6 / len(oa)] * len(oa)
             st.plotly_chart(mk_sankey(oa, "BLINDSPOT Optimized"), use_container_width=True, config=dict(displayModeBar=False))
-
-        # Comparison table
-        st.markdown('<span class="section-label">Reallocation Delta Analysis · All active underfunded crises</span>', unsafe_allow_html=True)
-        table = []
-        for _, r in df_opt.sort_values('Crisis_Severity_Score', ascending=False).iterrows():
-            delta = r['Optimal_Allocation_USD'] - r['funding_received']
-            table.append({
-                'Country':           r['Country_Name'],
-                'Severity':          f"{r['Crisis_Severity_Score']:.0f}",
-                'Current Funding':   fmt_b(r['funding_received']),
-                'Optimal Allocation':fmt_b(r['Optimal_Allocation_USD']),
-                'Delta':             ('+' if delta >= 0 else '') + fmt_b(delta),
-                'Lives Saved':       f"{int(r['Projected_Lives_Saved']):,}",
-            })
-        _tdf = pd.DataFrame(table)
-        _styled = (
-            _tdf.style
-            .set_properties(**{
-                'color':            'black',
-                'background-color': 'white',
-                'font-family':      'IBM Plex Mono, monospace',
-                'font-size':        '12px',
-            })
-            .set_table_styles([
-                {'selector': 'thead th', 'props': [
-                    ('color', 'black'),
-                    ('background-color', '#f0f0f0'),
-                    ('font-family', 'IBM Plex Mono, monospace'),
-                    ('font-size', '11px'),
-                    ('text-transform', 'uppercase'),
-                    ('letter-spacing', '1px'),
-                ]},
-                {'selector': 'tbody tr:nth-child(even) td', 'props': [
-                    ('background-color', '#f7f7f7'),
-                ]},
-            ])
-        )
-        st.dataframe(_styled, use_container_width=True, hide_index=True)
-        st.markdown(f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:{DIM};margin-top:6px;text-transform:uppercase;letter-spacing:1.2px;">SLSQP optimizer · diminishing returns + conflict access penalty</div>', unsafe_allow_html=True)
 
     else:
         st.markdown(f"""
