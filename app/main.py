@@ -2540,43 +2540,65 @@ def render_chat(df):
                         f"allocation data.")
         })
 
-    st.markdown(f'<hr style="border-color:{_chat_border};margin:0;">', unsafe_allow_html=True)
-    st.markdown(f"""
-    <div style="background:{_chat_bg};border-top:1px solid {_chat_border};padding:14px 0 8px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_chat_text};text-transform:uppercase;letter-spacing:2px;">◎ BLINDSPOT AI Agent</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:{_chat_dim};text-transform:uppercase;letter-spacing:1.5px;">Gemini 2.5 Flash · Domain-restricted</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    chat_pane = st.container()
+    with chat_pane:
+        st.markdown('<div class="chat-overlay-marker"></div>', unsafe_allow_html=True)
+        components.html("""
+        <script>
+        (function() {
+            var P = window.parent.document;
+            var added = P.getAttribute('data-chat-outside');
+            if (!added) {
+                P.setAttribute('data-chat-outside', 'true');
+                P.addEventListener('mousedown', function(e) {
+                    var m = P.querySelector('.chat-overlay-marker');
+                    if (m) {
+                        var box = m.closest('[data-testid="stVerticalBlock"]');
+                        var fab = P.getElementById('bs-chat-fab');
+                        if (box && !box.contains(e.target) && (!fab || !fab.contains(e.target))) {
+                            var btns = P.querySelectorAll('button');
+                            for (var i = 0; i < btns.length; i++) {
+                                var t = (btns[i].innerText || btns[i].textContent || '').trim();
+                                if (t === 'nav_chat') { btns[i].click(); return; }
+                            }
+                        }
+                    }
+                });
+            }
+        })();
+        </script>
+        """, height=0)
 
-    chat_c = st.container(height=250, border=False)
-    with chat_c:
-        for msg in st.session_state.messages:
-            is_bot = msg['role'] == 'assistant'
-            align = "flex-start" if is_bot else "flex-end"
-            bg = _bot_bubble if is_bot else _usr_bubble
-            bdr = _bot_bdr if is_bot else _chat_border
-            pfx = "AI › " if is_bot else "YOU › "
-            st.markdown(f"""
-            <div style="display:flex;justify-content:{align};margin-bottom:5px;">
-                <div style="max-width:86%;background:{bg};border:1px solid {bdr};border-radius:7px;padding:7px 11px;">
-                    <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:{_chat_dim};text-transform:uppercase;letter-spacing:1.5px;margin-bottom:3px;">{pfx}</div>
-                    <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:{_chat_text};line-height:1.5;">{msg['content']}</div>
-                </div>
+        st.markdown(f"""
+        <div style="background:{_chat_bg};border-bottom:1px solid {_chat_border};padding:14px 18px 12px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{_chat_text};text-transform:uppercase;letter-spacing:2px;font-weight:600;">◎ BLINDSPOT AI Agent</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:{_chat_dim};text-transform:uppercase;letter-spacing:1px;">Gemini 2.5 Flash</span>
             </div>
-            """, unsafe_allow_html=True)
+        </div>
+        """, unsafe_allow_html=True)
 
-    with st.form("chat_form", clear_on_submit=True):
-        ci1, ci2 = st.columns([6, 1])
-        with ci1:
-            prompt = st.text_input("Message", placeholder="Ask about any crisis, methodology, or funding data...",
-                                   label_visibility="collapsed", key="chat_input")
-        with ci2:
-            send = st.form_submit_button("Send", use_container_width=True)
+        chat_c = st.container(height=350, border=False)
+        with chat_c:
+            for msg in st.session_state.messages:
+                is_bot = msg['role'] == 'assistant'
+                align = "flex-start" if is_bot else "flex-end"
+                bg = _bot_bubble if is_bot else _usr_bubble
+                bdr = _bot_bdr if is_bot else _chat_border
+                pfx = "AI › " if is_bot else "YOU › "
+                st.markdown(f"""
+                <div style="display:flex;justify-content:{align};margin:6px 14px;">
+                    <div style="max-width:86%;background:{bg};border:1px solid {bdr};border-radius:7px;padding:9px 12px;box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:{_chat_dim};text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;">{pfx}</div>
+                        <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_chat_text};line-height:1.5;">{msg['content']}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
-    if send and prompt:
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        prompt = st.chat_input("Ask about any crisis data...", key="chat_input")
+
+        if prompt:
+            st.session_state.messages.append({"role": "user", "content": prompt})
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
             st.session_state.messages.append({"role": "assistant", "content": "Error: GEMINI_API_KEY not configured."})
