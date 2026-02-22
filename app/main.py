@@ -165,7 +165,13 @@ st.markdown("""
     box-sizing: border-box !important;
 }
 section[data-testid="stMain"] > div { padding: 0 !important; }
-.stApp { background: #08080C !important; }
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
+    background: #08080C !important;
+}
+[data-testid="stAppViewContainer"] > section,
+[data-testid="stMain"] {
+    background: transparent !important;
+}
 .element-container { margin-bottom: 0 !important; }
 
 /* ── FULL-BLEED ESCAPE (edge-to-edge bg while keeping content aligned) ── */
@@ -228,78 +234,92 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Syne', sans-serif !important; color: var(
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
-/* ── FLOATING PILL NAVBAR — constrained to container width ── */
+/* ── FLOATING PILL NAVBAR ── */
 #bs-pill-nav {
     position: fixed;
-    top: 14px;
+    top: 16px;
     left: 50%;
     transform: translateX(-50%);
-    /* Pill spans same logical width as the content container */
-    width: calc(100% - 2 * var(--container-pad));
-    max-width: var(--container-max);
+    /* Auto-width pill — never fights scrollbar math */
+    width: max-content;
+    max-width: calc(100vw - 32px);
     display: flex;
     align-items: center;
-    gap: 0;
-    padding: 5px 6px;
+    gap: 2px;
+    padding: 6px 8px;
     border-radius: 100px;
-    background: rgba(8,8,12,0.85);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255,255,255,0.10);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+    background: rgba(8,8,12,0.82);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border: 1px solid rgba(255,255,255,0.11);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.55),
+                0 2px 8px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.07);
     z-index: 9000;
     white-space: nowrap;
     box-sizing: border-box;
 }
 #bs-pill-nav .bs-logo {
     font-family: 'Syne', sans-serif;
-    font-size: 15px; font-weight: 800;
+    font-size: 14px; font-weight: 800;
     color: #FFFFFF;
-    letter-spacing: 3px; text-transform: uppercase;
-    padding: 0 16px 0 10px;
+    letter-spacing: 4px; text-transform: uppercase;
+    padding: 0 18px 0 12px;
     user-select: none;
 }
 #bs-pill-nav .bs-logo em { color: #E53935; font-style: normal; }
 #bs-pill-nav .bs-sep {
-    width: 1px; height: 18px;
+    width: 1px; height: 20px;
     background: rgba(255,255,255,0.10);
-    margin: 0 4px;
+    margin: 0 2px;
     flex-shrink: 0;
 }
 #bs-pill-nav .bs-nav-item {
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px; font-weight: 400;
-    text-transform: uppercase; letter-spacing: 2px;
-    color: rgba(255,255,255,0.5);
-    padding: 7px 14px;
+    font-size: 10.5px; font-weight: 400;
+    text-transform: uppercase; letter-spacing: 1.8px;
+    color: rgba(255,255,255,0.45);
+    padding: 8px 16px;
     border-radius: 100px;
     cursor: pointer;
     border: none; background: transparent;
-    transition: color 0.15s;
+    transition: color 0.18s, background 0.18s;
     text-decoration: none;
     display: inline-block;
 }
-#bs-pill-nav .bs-nav-item:hover { color: #FFFFFF; background: transparent; }
-#bs-pill-nav .bs-nav-item.active { color: #E53935; background: transparent; font-weight: 500; }
+#bs-pill-nav .bs-nav-item:hover {
+    color: #FFFFFF;
+    background: rgba(255,255,255,0.06);
+}
+#bs-pill-nav .bs-nav-item.active {
+    color: #E53935;
+    background: rgba(229,57,53,0.10);
+    font-weight: 500;
+}
 #bs-pill-nav .bs-toggle {
-    width: 32px; height: 32px;
+    width: 34px; height: 34px;
     border-radius: 50%;
-    border: none; background: transparent;
+    border: none;
+    background: rgba(255,255,255,0.05);
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 15px; color: rgba(255,255,255,0.4);
-    transition: color 0.15s;
+    font-size: 14px; color: rgba(255,255,255,0.45);
+    transition: color 0.18s, background 0.18s;
     flex-shrink: 0;
+    margin-left: 4px;
 }
-#bs-pill-nav .bs-toggle:hover { color: #FFFFFF; background: transparent; }
+#bs-pill-nav .bs-toggle:hover {
+    color: #FFFFFF;
+    background: rgba(255,255,255,0.10);
+}
 #bs-pill-nav .bs-live-badge {
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
     color: #10B981;
-    background: rgba(16,185,129,0.12);
-    border: 1px solid rgba(16,185,129,0.25);
+    background: rgba(16,185,129,0.13);
+    border: 1px solid rgba(16,185,129,0.28);
     border-radius: 100px;
-    padding: 4px 10px;
+    padding: 5px 11px;
     margin: 0 6px;
     flex-shrink: 0;
 }
@@ -348,6 +368,7 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Syne', sans-serif !important; color: var(
 }
 
 /* ── HERO ── */
+#bs-hero-num { color: #E53935 !important; }
 .hero-section {
     padding: 60px 48px 48px;
     background: var(--hero-bg, transparent);
@@ -540,6 +561,135 @@ iframe { border: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
+# ─── CUSTOM CURSOR ─────────────────────────────────────────────────────────────
+# Must use components.html() — st.markdown() does NOT execute <script> tags
+# (React's dangerouslySetInnerHTML strips them). The iframe reaches parent.document.
+components.html("""
+<script>
+(function () {
+    var p = window.parent;
+    var pd = p.document;
+
+    /* Guard: only initialise once across Streamlit re-renders */
+    if (p.__bsCursorInit) return;
+    p.__bsCursorInit = true;
+
+    /* ── Inject CSS into parent <head> ── */
+    var style = pd.createElement('style');
+    style.id  = 'bs-cur-style';
+    style.textContent =
+        '*, *::before, *::after { cursor: none !important; }' +
+
+        '#bs-cur-ring {' +
+        '  position:fixed; top:0; left:0; pointer-events:none; z-index:2147483647;' +
+        '  width:26px; height:26px; margin-left:-13px; margin-top:-13px;' +
+        '  border:2px solid #E53935; border-radius:50%;' +
+        '  transition: width .22s cubic-bezier(.25,.46,.45,.94),' +
+        '              height .22s cubic-bezier(.25,.46,.45,.94),' +
+        '              margin .22s cubic-bezier(.25,.46,.45,.94),' +
+        '              background .22s, border-color .22s, opacity .2s;' +
+        '  will-change:transform,width,height;' +
+        '}' +
+
+        '#bs-cur-dot {' +
+        '  position:fixed; top:0; left:0; pointer-events:none; z-index:2147483647;' +
+        '  width:5px; height:5px; margin-left:-2.5px; margin-top:-2.5px;' +
+        '  background:#E53935; border-radius:50%;' +
+        '  will-change:transform; transition:opacity .15s;' +
+        '}' +
+
+        '#bs-cur-ring.bs-hover {' +
+        '  width:52px; height:52px; margin-left:-26px; margin-top:-26px;' +
+        '  border-color:rgba(229,57,53,0.55); background:rgba(229,57,53,0.07);' +
+        '}' +
+
+        '.bs-lift { transform:translateY(-3px) !important;' +
+        '  transition:transform .22s cubic-bezier(.25,.46,.45,.94) !important; }';
+
+    pd.head.appendChild(style);
+
+    /* ── Create cursor divs on parent <body> (outside React tree) ── */
+    var ring = pd.createElement('div'); ring.id = 'bs-cur-ring';
+    var dot  = pd.createElement('div'); dot.id  = 'bs-cur-dot';
+    pd.body.appendChild(ring);
+    pd.body.appendChild(dot);
+
+    var mx = -200, my = -200, rx = -200, ry = -200;
+
+    /* Dot snaps to mouse instantly via GPU transform */
+    pd.addEventListener('mousemove', function (e) {
+        mx = e.clientX; my = e.clientY;
+        dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
+    }, { passive: true });
+
+    /* Ring follows with smooth lerp at 60 fps */
+    (function loop() {
+        rx += (mx - rx) * 0.20;
+        ry += (my - ry) * 0.20;
+        ring.style.transform = 'translate(' + rx + 'px,' + ry + 'px)';
+        p.requestAnimationFrame(loop);
+    })();
+
+    /* Hover effects */
+    var LIFT_SEL = '.triage-row,.kpi-pill,.metric-summary,.impact-box,.tech-card,.rag-card,.identity-card,.metric-cell';
+    var RING_SEL = 'a,button,[role="button"],.bs-nav-item,.bs-toggle,h1,h2,h3';
+
+    pd.addEventListener('mouseover', function (e) {
+        var lift = e.target.closest(LIFT_SEL);
+        var ro   = !lift && e.target.closest(RING_SEL);
+        if (lift)    { ring.classList.add('bs-hover'); lift.classList.add('bs-lift'); }
+        else if (ro) { ring.classList.add('bs-hover'); }
+    }, { passive: true });
+
+    pd.addEventListener('mouseout', function (e) {
+        ring.classList.remove('bs-hover');
+        var lift = e.target.closest(LIFT_SEL);
+        if (lift) lift.classList.remove('bs-lift');
+    }, { passive: true });
+
+    pd.addEventListener('mouseleave', function () { dot.style.opacity='0'; ring.style.opacity='0'; });
+    pd.addEventListener('mouseenter', function () { dot.style.opacity='1'; ring.style.opacity='1'; });
+
+    /* ── Forward mouse events from ALL child iframes (globe, navbar, chat…) ── */
+    function bridgeIframe(iframe) {
+        try {
+            var idoc = iframe.contentDocument || iframe.contentWindow.document;
+            idoc.addEventListener('mousemove', function (e) {
+                var r = iframe.getBoundingClientRect();
+                mx = r.left + e.clientX;
+                my = r.top  + e.clientY;
+                dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
+            }, { passive: true });
+            idoc.addEventListener('mouseleave', function () {
+                dot.style.opacity='0'; ring.style.opacity='0';
+            });
+            idoc.addEventListener('mouseenter', function () {
+                dot.style.opacity='1'; ring.style.opacity='1';
+            });
+        } catch(e) { /* cross-origin iframe — skip */ }
+    }
+
+    /* Bridge iframes already in DOM */
+    var frames = pd.querySelectorAll('iframe');
+    for (var i = 0; i < frames.length; i++) bridgeIframe(frames[i]);
+
+    /* Bridge iframes added later (Streamlit lazy-renders them) */
+    var obs = new MutationObserver(function (mutations) {
+        mutations.forEach(function (m) {
+            m.addedNodes.forEach(function (n) {
+                if (n.tagName === 'IFRAME') { bridgeIframe(n); }
+                else if (n.querySelectorAll) {
+                    var iframes = n.querySelectorAll('iframe');
+                    for (var j = 0; j < iframes.length; j++) bridgeIframe(iframes[j]);
+                }
+            });
+        });
+    });
+    obs.observe(pd.body, { childList: true, subtree: true });
+})();
+</script>
+""", height=0)
+
 
 # ─── SESSION STATE ─────────────────────────────────────────────────────────────
 for key, default in [
@@ -592,7 +742,13 @@ def inject_theme_css():
 }
 
 /* ── APP SHELL ── */
-.stApp { background: linear-gradient(135deg, #EFF6FF 0%, #F0F4F8 50%, #EEF2F7 100%) !important; }
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
+    background: #F0F4F8 !important;
+}
+[data-testid="stAppViewContainer"] > section,
+[data-testid="stMain"] {
+    background: transparent !important;
+}
 
 /* ── TYPOGRAPHY ── */
 body, p, span, div, label, li { color: #1E293B !important; }
@@ -600,20 +756,18 @@ h1,h2,h3,h4,h5,h6 { color: #0A1628 !important; }
 
 /* ── FLOATING PILL NAVBAR ── */
 #bs-pill-nav {
-    background: rgba(255,255,255,0.88) !important;
-    border-color: rgba(0,0,0,0.09) !important;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.95) !important;
-    backdrop-filter: blur(24px) saturate(1.8) !important;
-    -webkit-backdrop-filter: blur(24px) saturate(1.8) !important;
+    background: rgba(255,255,255,0.82) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+    box-shadow: 0 4px 28px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.95) !important;
 }
 #bs-pill-nav .bs-logo { color: #0A1628 !important; }
 #bs-pill-nav .bs-logo em { color: #C8372D !important; }
 #bs-pill-nav .bs-sep { background: rgba(0,0,0,0.10) !important; }
 #bs-pill-nav .bs-nav-item { color: rgba(10,22,40,0.45) !important; }
-#bs-pill-nav .bs-nav-item:hover { color: #0A1628 !important; }
-#bs-pill-nav .bs-nav-item.active { color: #C8372D !important; }
-#bs-pill-nav .bs-toggle { color: rgba(10,22,40,0.40) !important; }
-#bs-pill-nav .bs-toggle:hover { color: #0A1628 !important; }
+#bs-pill-nav .bs-nav-item:hover { color: #0A1628 !important; background: rgba(0,0,0,0.05) !important; }
+#bs-pill-nav .bs-nav-item.active { color: #C8372D !important; background: rgba(200,55,45,0.08) !important; }
+#bs-pill-nav .bs-toggle { color: rgba(10,22,40,0.40) !important; background: rgba(0,0,0,0.04) !important; }
+#bs-pill-nav .bs-toggle:hover { color: #0A1628 !important; background: rgba(0,0,0,0.08) !important; }
 #bs-pill-nav .bs-live-badge {
     color: #0A7A56 !important;
     background: rgba(10,122,86,0.10) !important;
@@ -793,7 +947,7 @@ hr { border-color: rgba(0,0,0,0.08) !important; }
 }
 /* Ensure the stApp background gradient takes effect */
 [data-testid="stApp"], [class*="stApp"] {
-    background: linear-gradient(135deg, #EFF6FF 0%, #F0F4F8 50%, #EEF2F7 100%) !important;
+    background: linear-gradient(135deg, #EFF6FF 30%, #F0F4F8 50%, #EEF2F7 100%) !important;
 }
 /* Override any inline low-alpha white text that was used as muted */
 [style*="color:rgba(255,255,255,0.2)"], [style*="color: rgba(255,255,255,0.2)"] {
@@ -1212,45 +1366,71 @@ def page_command_center(df):
     # Format: "87.3M" or "216M"
     if hero_num >= 1_000_000:
         hero_num_str = f"{hero_num / 1_000_000:.1f}M"
+        hero_num_float = round(hero_num / 1_000_000, 1)
+        hero_num_suffix = "M"
     else:
         hero_num_str = f"{hero_num:,}"
+        hero_num_float = float(hero_num)
+        hero_num_suffix = ""
 
-    st.markdown(f"""
-    <div class="bs-full-bleed" style="border-bottom:1px solid {_h_border};overflow:visible;padding-top:60px;padding-bottom:48px;">
+    # ── Hero + KPI injected via components.html into parent doc (st.markdown escapes complex HTML)
+    components.html(f"""
+<script>
+(function() {{
+    var P = window.parent.document;
+
+    // Remove any previous hero injection
+    var old = P.getElementById('bs-hero-block');
+    if (old) old.remove();
+
+    // Inject hero-specific CSS into parent head (st.markdown CSS is iframe-scoped)
+    var oldStyle = P.getElementById('bs-hero-style');
+    if (oldStyle) oldStyle.remove();
+    var heroStyle = P.createElement('style');
+    heroStyle.id = 'bs-hero-style';
+    heroStyle.textContent = '#bs-hero-num {{ color: #E53935 !important; font-family: Syne, sans-serif !important; }}';
+    P.head.appendChild(heroStyle);
+
+    var wrap = P.createElement('div');
+    wrap.id = 'bs-hero-block';
+    wrap.style.marginTop = '80px';
+    wrap.innerHTML = `
+    <div style="border-bottom:1px solid {_h_border};overflow:visible;
+                padding-top:48px;padding-bottom:48px;text-align:center;
+                padding-left:var(--container-pad,48px);padding-right:var(--container-pad,48px);">
+
         <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:400;
                     letter-spacing:4px;text-transform:uppercase;color:{_h_eyebrow};
                     margin-bottom:28px;">
-            Humanitarian Funding Intelligence &nbsp;·&nbsp; Live Data
+            THE FUNDING BLINDSPOT &nbsp;&middot;&nbsp; LIVE CRISIS INTELLIGENCE
         </div>
-        <div style="font-family:'Syne',sans-serif;font-size:96px;
+
+        <div id="bs-hero-num" style="font-family:'IBM Plex Mono',sans-serif;font-size:96px;
                     font-weight:800;line-height:1;letter-spacing:-3px;
-                    color:{_h_num_c};margin-bottom:4px;overflow:visible;">
-            {hero_num_str}
+                    color:#E53935 !important;margin-bottom:4px;">{hero_num_str}</div>
+
+        <div style="font-family:'IBM Plex Mono',sans-serif;font-size:26px;
+                    font-weight:300;line-height:1.5;color:{_h_subtitle};
+                    margin-bottom:8px;">
+            lives in crises receiving less than 60% of needed funding.
         </div>
-        <div style="font-family:'Syne',sans-serif;font-size:48px;
-                    font-weight:300;line-height:1.1;color:{_h_word_c};
-                    margin-bottom:16px;overflow:visible;">
-            people
+        <div style="font-family:'IBM Plex Mono',sans-serif;font-size:26px;
+                    font-weight:300;line-height:1.5;color:{_h_subtitle};
+                    margin-bottom:36px;">
+            Aid follows cameras.
+            <span style="color:#FFFFFF;
+                         border-bottom:2px solid #E53935;">BLINDSPOT</span>
+            follows need.
         </div>
-        <div style="font-family:'Syne',sans-serif;font-size:28px;
-                    font-weight:300;line-height:1.3;color:{_h_subtitle};
-                    margin-bottom:32px;">
-            in active crises receive less than 70% of needed funding.
-        </div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:16px;font-weight:400;
-                    color:{_h_desc_c};line-height:1.8;max-width:640px;
-                    margin-bottom:32px;">
-            BLINDSPOT is an AI-powered humanitarian intelligence platform.
-            It scores every active crisis by population severity and funding coverage,
-            detects systematic misallocations in donor capital, and shows exactly
-            where moving money saves the most lives — sourced from OCHA FTS data.
-        </div>
+
         <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;
                     color:{_h_source_c};letter-spacing:1px;">
-            Source: BLINDSPOT optimizer &nbsp;·&nbsp; OCHA FTS &nbsp;·&nbsp; IPC Global &nbsp;·&nbsp; Updated live
+            Data: OCHA FTS &nbsp;&middot;&nbsp; ACLED &nbsp;&middot;&nbsp; IPC Global &nbsp;&middot;&nbsp; IDMC &nbsp;&middot;&nbsp; ReliefWeb &nbsp;&middot;&nbsp; Updated live
         </div>
     </div>
-    <div class="bs-full-bleed" style="display:grid;grid-template-columns:repeat(4,1fr);">
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);
+                padding-left:var(--container-pad,48px);padding-right:var(--container-pad,48px);">
         <div style="padding:28px 32px;border-right:1px solid {_kpi_border};border-bottom:1px solid {_kpi_border};background:{_kpi_bg};">
             <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">People In Need</div>
             <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">{fmt_people(total_needed)}</div>
@@ -1271,8 +1451,31 @@ def page_command_center(df):
             <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">{n_crises}</div>
             <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Countries with IPC Phase&nbsp;3+ populations</div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+    </div>`;
+
+    // Insert after the navbar iframe
+    var stMain = P.querySelector('[data-testid="stMain"]') || P.body;
+    stMain.insertBefore(wrap, stMain.firstChild);
+
+    // Count-up animation
+    var el = P.getElementById('bs-hero-num');
+    if (el) {{
+        var target = {hero_num_float};
+        var suffix = '{hero_num_suffix}';
+        var start  = Math.max(0, target - 8);
+        var t0 = null;
+        function easeOut(t) {{ return 1 - Math.pow(1-t, 3); }}
+        (function step(ts) {{
+            if (!t0) t0 = ts;
+            var p = Math.min((ts - t0) / 900, 1);
+            var v = start + (target - start) * easeOut(p);
+            el.textContent = (suffix ? v.toFixed(1) : Math.round(v).toLocaleString()) + suffix;
+            if (p < 1) requestAnimationFrame(step);
+        }})(performance.now());
+    }}
+}})();
+</script>
+""", height=0)
 
     # ── MAP + QUEUE ──
     _map_lbl_c = "rgba(10,22,40,0.40)" if _is_light else "rgba(255,255,255,0.25)"
@@ -1568,256 +1771,431 @@ def page_crisis_detail(df):
         st.warning("No data loaded.")
         return
 
-    st.markdown('<div style="padding:20px 0;">', unsafe_allow_html=True)
+    _is_light = st.session_state.get('theme', 'dark') == 'light'
+    _bdr   = "rgba(0,0,0,0.08)"       if _is_light else "rgba(255,255,255,0.07)"
+    _dim   = "rgba(10,22,40,0.38)"    if _is_light else "rgba(255,255,255,0.25)"
+    _dimmer= "rgba(10,22,40,0.20)"    if _is_light else "rgba(255,255,255,0.12)"
+    _text  = "#0A1628"                 if _is_light else "rgba(255,255,255,0.85)"
+    _card  = "rgba(0,0,0,0.03)"       if _is_light else "rgba(255,255,255,0.025)"
+    _white = "#0A1628"                 if _is_light else "#FFFFFF"
+
+    st.markdown('<div style="padding:64px 0 0;">', unsafe_allow_html=True)
+
+    # ── Page header ──
+    st.markdown(f"""
+    <div style="text-align:center;padding:0 0 40px;border-bottom:1px solid {_bdr};margin-bottom:32px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:400;
+                    letter-spacing:4px;text-transform:uppercase;color:{RED};margin-bottom:20px;">
+            CRISIS DETAIL &nbsp;&middot;&nbsp; BLINDSPOT INTELLIGENCE
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:clamp(36px,5vw,64px);font-weight:700;
+                    color:{_white};line-height:1.05;letter-spacing:-1px;margin-bottom:16px;">
+            Crisis Deep Dive
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:17px;font-weight:300;
+                    color:{_dim};max-width:540px;margin:0 auto;line-height:1.65;">
+            Select a crisis zone to see its full severity profile, funding history,
+            and AI-generated briefs for donors, journalists, and UN coordinators.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     options = df.sort_values('Crisis_Severity_Score', ascending=False)['Country_Name'].tolist()
     def_idx = 0
     if st.session_state.selected_country in options:
         def_idx = options.index(st.session_state.selected_country)
 
-    selected = st.selectbox("SELECT CRISIS", options, index=def_idx, key="cd_select")
+    _sc_l, _sc_m, _sc_r = st.columns([1, 2, 1])
+    with _sc_m:
+        st.markdown(f'<div style="text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:{_dim};margin-bottom:4px;">SELECT CRISIS</div>', unsafe_allow_html=True)
+        selected = st.selectbox("SELECT CRISIS", options, index=def_idx, key="cd_select", label_visibility="collapsed")
     st.session_state.selected_country = selected
     row = df[df['Country_Name'] == selected].iloc[0]
 
-    iso  = row['iso3']
-    sc   = row['Crisis_Severity_Score']
-    fp   = row['Funding_Ratio']
-    req  = row.get('funding_required', 0)
-    rcvd = row.get('funding_received', 0)
-    ipc  = row.get('ipc_phase_3_plus', 0)
-    fat  = row.get('fatalities', 0)
-    ilab = row.get('IPC_Label', 'IPC Phase 3+')
-    reg  = row.get('Region', 'Unknown')
+    iso   = row['iso3']
+    sc    = row['Crisis_Severity_Score']
+    fp    = row['Funding_Ratio']
+    req   = row.get('funding_required', 0)
+    rcvd  = row.get('funding_received', 0)
+    ipc   = row.get('ipc_phase_3_plus', 0)
+    fat   = row.get('fatalities', 0)
+    ilab  = row.get('IPC_Label', 'IPC Phase 3+')
+    reg   = row.get('Region', 'Unknown')
     opt_lives = max(float(row.get('Projected_Lives_Saved', 0)), 0)
+    gap   = max(req - rcvd, 0)
 
     ic    = RED if 'Phase 4' in ilab else (AMBER if 'Phase 3' in ilab else GREEN)
     sc_c  = sev_color(sc)
     fp_c  = fund_color(fp)
+    lives_per_m = round(opt_lives / max(req / 1e6, 1), 0)
 
-    # ── IDENTITY CARD ──
+    # ── Identity strip — centered ──
     st.markdown(f"""
-    <div class="identity-card">
-        <div>
-            <div class="identity-country">{selected}</div>
-            <div class="identity-iso">{iso} &nbsp;·&nbsp; {reg}</div>
-            <span class="ipc-badge" style="background:{ic}18;color:{ic};border:1px solid {ic}40;">{ilab}</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:0;
+                border:1px solid {_bdr};border-radius:10px;overflow:hidden;margin-bottom:28px;text-align:center;">
+        <div style="padding:24px 16px;border-right:1px solid {_bdr};background:{_card};">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{_dim};letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">Country</div>
+            <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:{_white};line-height:1.1;">{selected}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_dim};margin-top:4px;">{iso} · {reg}</div>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-            <div class="metric-cell"><span class="mc-val">{fmt_people(ipc)}</span><span class="mc-lbl">People in Need</span></div>
-            <div class="metric-cell"><span class="mc-val">{fat:,.0f}</span><span class="mc-lbl">Conflict Fatalities</span></div>
-            <div class="metric-cell"><span class="mc-val">{fmt_b(req)}</span><span class="mc-lbl">$ Required</span></div>
-            <div class="metric-cell"><span class="mc-val" style="color:{fp_c};">{fp:.0f}%</span><span class="mc-lbl">Funded</span></div>
+        <div style="padding:24px 16px;border-right:1px solid {_bdr};background:{_card};">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{_dim};letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">Severity</div>
+            <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:700;color:{sc_c};line-height:1;">{sc:.0f}<span style="font-size:14px;font-weight:400;color:{_dim};">/100</span></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{_dim};margin-top:4px;">BLINDSPOT PCA</div>
         </div>
-        <div style="text-align:right;flex-shrink:0;">
-            <div class="identity-score-num" style="color:{sc_c};">{sc:.0f}</div>
-            <div class="identity-score-label">Severity Score</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:{DIM};margin-top:3px;text-transform:uppercase;letter-spacing:1px;">BLINDSPOT PCA MODEL</div>
+        <div style="padding:24px 16px;border-right:1px solid {_bdr};background:{_card};">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{_dim};letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">Funded</div>
+            <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:700;color:{fp_c};line-height:1;">{fp:.0f}<span style="font-size:14px;font-weight:400;color:{_dim};">%</span></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{_dim};margin-top:4px;">of need met</div>
+        </div>
+        <div style="padding:24px 16px;border-right:1px solid {_bdr};background:{_card};">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{_dim};letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">People in Need</div>
+            <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:700;color:{_white};line-height:1;">{fmt_people(ipc)}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{_dim};margin-top:4px;">{ilab}</div>
+        </div>
+        <div style="padding:24px 16px;background:{_card};">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{_dim};letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">Funding Gap</div>
+            <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:700;color:{RED};line-height:1;">{fmt_b(gap)}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{_dim};margin-top:4px;">unmet need</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── THREE CHARTS ──
+    # ── 3-Persona Briefs ──
+    st.markdown(f"""
+    <div style="text-align:center;margin-top:64px;margin-bottom:28px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;
+                    text-transform:uppercase;color:{_dim};margin-bottom:8px;">
+            READY-TO-USE BRIEFS &nbsp;·&nbsp; AI GEMINI 2.5 FLASH
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:600;color:{_white};">
+            3-Persona Briefs
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:14px;color:{_dim};margin-top:8px;">
+            One crisis, three audiences — each brief tailored for action.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Green generate buttons — inject CSS directly into page DOM (no iframe sandbox issue)
+    st.markdown("""
+    <style>
+    div[data-testid="column"] div[data-testid="stButton"] > button {
+        background: linear-gradient(135deg, #15803d, #22c55e) !important;
+        color: #ffffff !important;
+        border: none !important;
+        font-weight: 700 !important;
+        font-family: 'DM Sans', sans-serif !important;
+        letter-spacing: 0.4px !important;
+        font-size: 15px !important;
+        transition: all 0.18s ease !important;
+    }
+    div[data-testid="column"] div[data-testid="stButton"] > button:hover {
+        background: linear-gradient(135deg, #16a34a, #4ade80) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 16px rgba(34,197,94,0.40) !important;
+    }
+    div[data-testid="column"] div[data-testid="stButton"] > button:active {
+        transform: translateY(0px) !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    crisis_data = {'iso3': iso, 'Crisis_Severity_Score': sc,
+                   'funding_required': req, 'funding_received': rcvd}
+
+    _persona_icons   = ['💰', '📰', '🔵']
+    _persona_labels  = ['DONOR', 'JOURNALIST', 'UN COORDINATOR']
+    _persona_keys    = ['donor', 'journalist', 'un']
+    _persona_context = [
+        f"Impact-first ROI framing. $1M here saves an estimated <b style='color:{GREEN};'>{int(lives_per_m):,} lives</b>. Early funding saves 3× more than late response.",
+        f"The <b style='color:{AMBER};'>untold story</b>: {selected} is a {sc:.0f}/100 severity crisis with only {fp:.0f}% funded. {fmt_people(ipc)} people affected. A {fmt_b(gap)} gap grows daily.",
+        f"Operational field brief. Severity {sc:.0f}/100 · Coverage {fp:.0f}% · Gap {fmt_b(gap)}. Activate pooled fund — prioritize food security and health clusters first.",
+    ]
+    _persona_actions = [
+        "Donate Now · UN OCHA CERF · Humanitarian Coordination",
+        "Verified: UN OCHA FTS · UCDP · IDMC · FEWS NET",
+        "Activate pooled fund · Cluster system · CERF emergency allocation",
+    ]
+    _persona_btns = ["Generate Donor Brief", "Generate Journalist Brief", "Generate UN Brief"]
+
+    col_d, col_j, col_u = st.columns(3, gap="medium")
+    persona_cols = [col_d, col_j, col_u]
+
+    _accent_colors = [AMBER, RED, "#60A5FA"]  # donor=gold, journalist=red, un=blue
+
+    for col_obj, icon, label, ctx, action, btn_label, aud_key, accent in zip(
+            persona_cols, _persona_icons, _persona_labels, _persona_context,
+            _persona_actions, _persona_btns, _persona_keys, _accent_colors):
+        with col_obj:
+            st.markdown(f"""
+            <div style="padding:22px 20px 18px;background:{_card};border:1px solid {_bdr};
+                        border-top:3px solid {accent};border-radius:10px;margin-bottom:12px;
+                        min-height:200px;box-sizing:border-box;">
+                <div style="font-size:26px;margin-bottom:10px;line-height:1;">{icon}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;
+                            text-transform:uppercase;color:{accent};margin-bottom:12px;
+                            font-weight:600;">{label}</div>
+                <div style="font-family:'DM Sans',sans-serif;font-size:17px;color:{_text};
+                            line-height:1.85;margin-bottom:16px;">{ctx}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{_dimmer};
+                            letter-spacing:1.1px;text-transform:uppercase;line-height:1.7;">{action}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            btn_key   = f"gen_{aud_key}_{iso}"
+            cache_key = f"brief_{aud_key}_{iso}"
+
+            if st.button(btn_label, key=btn_key, use_container_width=True):
+                with st.spinner("Generating via Gemini 2.5 Flash..."):
+                    try:
+                        briefs = generate_safety_brief_prompts(crisis_data, max(opt_lives, 1000))
+                        st.session_state[cache_key] = briefs[f'{aud_key}_brief']
+                    except Exception as e:
+                        st.session_state[cache_key] = f"Generation error: {str(e)[:200]}"
+
+            if cache_key in st.session_state and st.session_state[cache_key]:
+                st.markdown(
+                    f'<div style="font-family:\'DM Sans\',sans-serif;font-size:17px;color:{_text};'
+                    f'line-height:1.85;padding:18px 20px;background:{_card};'
+                    f'border-radius:8px;border:1px solid {_bdr};border-left:3px solid {accent};'
+                    f'margin-top:2px;white-space:pre-wrap;">'
+                    f'{st.session_state[cache_key]}</div>',
+                    unsafe_allow_html=True
+                )
+            st.markdown(
+                f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:{_dimmer};'
+                f'margin-top:6px;text-transform:uppercase;letter-spacing:1.5px;text-align:center;">'
+                f'◈ Gemini 2.5 Flash</div>',
+                unsafe_allow_html=True
+            )
+
+    st.markdown(f'<div style="height:44px;border-bottom:1px solid {_bdr};margin-bottom:40px;"></div>', unsafe_allow_html=True)
+
+    # ── Similar past crises (RAG) ──
+    st.markdown(f"""
+    <div style="text-align:center;margin-top:64px;margin-bottom:28px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;
+                    text-transform:uppercase;color:{_dim};margin-bottom:8px;">
+            SIMILAR PAST CRISES &nbsp;·&nbsp; ACTIAN VECTORAI
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:600;color:{_white};">
+            What Worked Before
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_dim};margin-top:6px;">
+            Vector-matched historical analogues and proven response strategies.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    profile = {'iso3': iso, 'Crisis_Severity_Score': sc, 'funding_required': req, 'Cluster_Need': 'Food/Health/WASH'}
+    try:
+        db_rag = ActianVectorDB()
+        base_m = db_rag.find_comparable_crisis(profile)
+        matches = [base_m,
+            {"historical_crisis": "Yemen Crisis (2016–2018)", "similarity_score": "78%", "what_worked": "Multi-donor coordination + CERF emergency activation.", "funding_secured": "$2.1B"},
+            {"historical_crisis": "Syria Displacement (2014–2015)", "similarity_score": "71%", "what_worked": "Regional refugee compact secured sustained pledges.", "funding_secured": "$3.4B"},
+            {"historical_crisis": "CAR Conflict (2013)", "similarity_score": "63%", "what_worked": "Cluster system activation + media advocacy campaign.", "funding_secured": "$0.6B"},
+        ]
+    except Exception:
+        matches = [
+            {"historical_crisis": "Somalia Famine (2011)", "similarity_score": "84%", "what_worked": "Rapid cash transfers + localized WASH interventions.", "funding_secured": "$1.2B"},
+            {"historical_crisis": "Yemen Crisis (2016–2018)", "similarity_score": "78%", "what_worked": "Multi-donor coordination + CERF activation.", "funding_secured": "$2.1B"},
+            {"historical_crisis": "Syria (2014–2015)", "similarity_score": "71%", "what_worked": "Regional refugee compact secured sustained pledges.", "funding_secured": "$3.4B"},
+            {"historical_crisis": "South Sudan Famine (2017)", "similarity_score": "57%", "what_worked": "IPC Phase 5 declaration → triggered emergency response.", "funding_secured": "$1.1B"},
+        ]
+
+    def _rag_card(col_obj, m):
+        sv   = int(str(m['similarity_score']).replace('%', ''))
+        sc3  = GREEN if sv >= 80 else (AMBER if sv >= 65 else MUTED)
+        bar_w = sv
+        with col_obj:
+            st.markdown(f"""
+            <div style="padding:20px;background:{_card};border:1px solid {_bdr};border-radius:10px;
+                        box-sizing:border-box;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{sc3};
+                                font-weight:600;letter-spacing:1px;">{m['similarity_score']} MATCH</div>
+                    <div style="width:60px;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;">
+                        <div style="width:{bar_w}%;height:100%;background:{sc3};border-radius:2px;"></div>
+                    </div>
+                </div>
+                <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:600;
+                            color:{_white};margin-bottom:10px;line-height:1.3;">
+                    {m['historical_crisis']}
+                </div>
+                <div style="font-family:'DM Sans',sans-serif;font-size:16px;color:{_text};
+                            line-height:1.75;margin-bottom:12px;">
+                    <span style="color:{GREEN};margin-right:6px;">✓</span>{m['what_worked']}
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;
+                                color:{GREEN};font-weight:600;">{m['funding_secured']} secured</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # Row 1
+    rag_r1 = st.columns(2, gap="medium")
+    _rag_card(rag_r1[0], matches[0])
+    _rag_card(rag_r1[1], matches[1])
+    # Row 2
+    rag_r2 = st.columns(2, gap="medium")
+    _rag_card(rag_r2[0], matches[2])
+    _rag_card(rag_r2[1], matches[3])
+
+    st.markdown(f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:{_dimmer};margin-top:4px;text-transform:uppercase;letter-spacing:1.5px;">◈ Actian VectorAI · matched against UN HRP documents</div>', unsafe_allow_html=True)
+
+    st.markdown(f'<div style="height:40px;border-bottom:1px solid {_bdr};margin-bottom:36px;"></div>', unsafe_allow_html=True)
+
+    # ── Charts (at the bottom) ──
+    st.markdown(f"""
+    <div style="text-align:center;margin-top:64px;margin-bottom:24px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;
+                    text-transform:uppercase;color:{_dim};margin-bottom:8px;">
+            DATA ANALYSIS &nbsp;·&nbsp; CHARTS
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:600;color:{_white};">
+            Crisis Visualizations
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     ch1, ch2, ch3 = st.columns(3, gap="medium")
 
-    # Radar
     with ch1:
-        st.markdown('<span class="section-label">Severity Breakdown · 6 humanitarian signals</span>', unsafe_allow_html=True)
+        st.markdown(f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:{_dim};letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Severity Breakdown · 6 Signals</div>', unsafe_allow_html=True)
         mx_ipc = max(df['ipc_phase_3_plus'].max(), 1)
         mx_fat = max(df['fatalities'].max(), 1)
         mx_gap = max((df['funding_required'] - df['funding_received']).clip(lower=0).max(), 1)
         sigs = ['Food\nInsecurity', 'Conflict\nIntensity', 'Funding\nGap', 'Severity\nScore', 'Coverage\nDeficit', 'Displacement']
         vals = [
-            (ipc / mx_ipc) * 100,
-            (fat / mx_fat) * 100,
-            ((req - rcvd) / mx_gap) * 100,
-            sc,
-            max(0, 100 - fp),
-            min(100, (ipc / max(mx_ipc * 0.5, 1)) * 100),
+            (ipc / mx_ipc) * 100, (fat / mx_fat) * 100,
+            ((req - rcvd) / mx_gap) * 100, sc,
+            max(0, 100 - fp), min(100, (ipc / max(mx_ipc * 0.5, 1)) * 100),
         ]
-        vc = vals + [vals[0]]
-        sc2 = sigs + [sigs[0]]
-        fig_r = go.Figure(go.Scatterpolar(
-            r=vc, theta=sc2, fill='toself',
-            fillcolor='rgba(232,61,61,0.12)',
-            line=dict(color=RED, width=2),
-        ))
-        fig_r.update_layout(
-            **plotly_base(), height=270,
-            polar=dict(
-                bgcolor=CARD,
-                radialaxis=dict(visible=True, range=[0, 100], gridcolor=BORDER, tickfont=dict(color=MUTED, size=7), linecolor=BORDER),
-                angularaxis=dict(gridcolor=BORDER, tickfont=dict(color=TEXT, size=8, family="IBM Plex Mono"), linecolor=BORDER),
-            ),
-            showlegend=False, margin=dict(l=28, r=28, t=10, b=10),
-        )
+        vc = vals + [vals[0]]; sc2 = sigs + [sigs[0]]
+        fig_r = go.Figure(go.Scatterpolar(r=vc, theta=sc2, fill='toself',
+            fillcolor='rgba(232,61,61,0.12)', line=dict(color=RED, width=2)))
+        fig_r.update_layout(**plotly_base(), height=260,
+            polar=dict(bgcolor=CARD,
+                radialaxis=dict(visible=True, range=[0,100], gridcolor=BORDER, tickfont=dict(color=MUTED, size=7), linecolor=BORDER),
+                angularaxis=dict(gridcolor=BORDER, tickfont=dict(color=TEXT, size=8, family="IBM Plex Mono"), linecolor=BORDER)),
+            showlegend=False, margin=dict(l=28, r=28, t=8, b=8))
         st.plotly_chart(fig_r, use_container_width=True, config=dict(displayModeBar=False))
 
-    # Funding timeline (synthetic)
     with ch2:
-        st.markdown('<span class="section-label">Funding History · Required vs Received · OCHA FTS</span>', unsafe_allow_html=True)
+        st.markdown(f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:{_dim};letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Funding History · Required vs Received</div>', unsafe_allow_html=True)
         yrs = list(range(2015, 2025))
         np.random.seed(abs(hash(iso)) % (2**31))
         base_r = req * np.linspace(0.45, 1.0, 10) * (1 + np.random.randn(10) * 0.04)
         base_rcv = (base_r * (fp / 100) * (1 + np.random.randn(10) * 0.08)).clip(0, None)
         for i in range(len(base_r)):
             base_rcv[i] = min(base_rcv[i], base_r[i])
-
         fig_f = go.Figure()
-        fig_f.add_trace(go.Scatter(
-            x=yrs, y=base_r / 1e6, name='Required',
-            line=dict(color=MUTED, width=1.5, dash='dot'), mode='lines'))
-        fig_f.add_trace(go.Scatter(
-            x=yrs + yrs[::-1],
-            y=list(base_r / 1e6) + list(base_rcv[::-1] / 1e6),
-            fill='toself', fillcolor='rgba(232,61,61,0.07)',
-            line=dict(color='rgba(0,0,0,0)'), name='Gap', hoverinfo='skip'))
-        fig_f.add_trace(go.Scatter(
-            x=yrs, y=base_rcv / 1e6, name='Received',
+        fig_f.add_trace(go.Scatter(x=yrs, y=base_r/1e6, name='Required', line=dict(color=MUTED, width=1.5, dash='dot'), mode='lines'))
+        fig_f.add_trace(go.Scatter(x=yrs+yrs[::-1], y=list(base_r/1e6)+list(base_rcv[::-1]/1e6),
+            fill='toself', fillcolor='rgba(232,61,61,0.07)', line=dict(color='rgba(0,0,0,0)'), name='Gap', hoverinfo='skip'))
+        fig_f.add_trace(go.Scatter(x=yrs, y=base_rcv/1e6, name='Received',
             line=dict(color=BLUE, width=2), marker=dict(size=4, color=BLUE), mode='lines+markers'))
-        fig_f.update_layout(
-            **plotly_base(), height=270,
+        fig_f.update_layout(**plotly_base(), height=260,
             xaxis=dict(gridcolor=BORDER, tickfont=dict(size=8)),
-            yaxis=dict(gridcolor=BORDER, tickfont=dict(size=8),
-                       title=dict(text="$M", font=dict(size=8, color=MUTED))),
+            yaxis=dict(gridcolor=BORDER, tickfont=dict(size=8), title=dict(text="$M", font=dict(size=8, color=MUTED))),
             legend=dict(font=dict(size=8, color=MUTED), bgcolor="rgba(0,0,0,0)", x=0.01, y=0.99),
-            margin=dict(l=36, r=8, t=10, b=28),
-        )
+            margin=dict(l=36, r=8, t=8, b=28))
         st.plotly_chart(fig_f, use_container_width=True, config=dict(displayModeBar=False))
 
-    # Media vs funding
     with ch3:
-        st.markdown('<span class="section-label">Media Attention vs Actual Need · ReliefWeb</span>', unsafe_allow_html=True)
+        st.markdown(f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:{_dim};letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Media Attention vs Actual Need</div>', unsafe_allow_html=True)
         yb = list(range(2020, 2025))
-        med = np.array([30, 25, 28, 20, 18]) * (1 + np.random.randn(5) * 0.08) * max(1 - sc / 120, 0.3)
-        need = np.array([60, 68, 74, 80, 88]) * (sc / 100)
+        np.random.seed(abs(hash(iso)) % (2**31))
+        med  = np.array([30,25,28,20,18]) * (1 + np.random.randn(5)*0.08) * max(1 - sc/120, 0.3)
+        need = np.array([60,68,74,80,88]) * (sc / 100)
         fig_m = make_subplots(specs=[[{"secondary_y": True}]])
         fig_m.add_trace(go.Bar(x=yb, y=need, name='Need Index', marker_color='rgba(232,61,61,0.55)'), secondary_y=False)
         fig_m.add_trace(go.Scatter(x=yb, y=med, name='Media Index', mode='lines+markers',
-                                   line=dict(color=AMBER, width=2), marker=dict(size=4)), secondary_y=True)
-        fig_m.update_layout(
-            **plotly_base(), height=270,
+            line=dict(color=AMBER, width=2), marker=dict(size=4)), secondary_y=True)
+        fig_m.update_layout(**plotly_base(), height=260,
             legend=dict(font=dict(size=8, color=MUTED), bgcolor="rgba(0,0,0,0)", x=0.01, y=0.99),
-            xaxis=dict(gridcolor=BORDER, tickfont=dict(size=8)),
-            margin=dict(l=28, r=28, t=10, b=28),
-        )
+            xaxis=dict(gridcolor=BORDER, tickfont=dict(size=8)), margin=dict(l=28, r=28, t=8, b=28))
         fig_m.update_yaxes(gridcolor=BORDER, tickfont=dict(size=8), secondary_y=False)
         fig_m.update_yaxes(gridcolor=BORDER, tickfont=dict(size=8), showgrid=False, secondary_y=True)
         st.plotly_chart(fig_m, use_container_width=True, config=dict(displayModeBar=False))
 
-    st.markdown('<div style="height:14px;"></div>', unsafe_allow_html=True)
-    pan_l, pan_r = st.columns(2, gap="large")
-
-    # ── RAG panel ──
-    with pan_l:
-        st.markdown('<span class="section-label">Similar Past Crises · Actian VectorAI</span>', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">What Worked Before</div>', unsafe_allow_html=True)
-
-        profile = {'iso3': iso, 'Crisis_Severity_Score': sc, 'funding_required': req, 'Cluster_Need': 'Food/Health/WASH'}
-        try:
-            db_rag = ActianVectorDB()
-            base_m = db_rag.find_comparable_crisis(profile)
-            matches = [
-                base_m,
-                {"historical_crisis": "Yemen Crisis (2016–2018)", "similarity_score": "78%",
-                 "what_worked": "Multi-donor coordination + CERF emergency activation.",
-                 "funding_secured": "$2.1B"},
-                {"historical_crisis": "Syria Displacement (2014–2015)", "similarity_score": "71%",
-                 "what_worked": "Regional refugee compact secured sustained pledges.",
-                 "funding_secured": "$3.4B"},
-                {"historical_crisis": "CAR Conflict (2013)", "similarity_score": "63%",
-                 "what_worked": "Cluster system activation + media advocacy campaign.",
-                 "funding_secured": "$0.6B"},
-                {"historical_crisis": "South Sudan Famine (2017)", "similarity_score": "57%",
-                 "what_worked": "IPC Phase 5 declaration triggered emergency response.",
-                 "funding_secured": "$1.1B"},
-            ]
-        except Exception:
-            matches = [
-                {"historical_crisis": "Somalia Famine (2011)", "similarity_score": "84%",
-                 "what_worked": "Rapid cash transfers + localized WASH interventions.",
-                 "funding_secured": "$1.2B"},
-                {"historical_crisis": "Yemen Crisis (2016–2018)", "similarity_score": "78%",
-                 "what_worked": "Multi-donor coordination + CERF activation.",
-                 "funding_secured": "$2.1B"},
-                {"historical_crisis": "Syria (2014–2015)", "similarity_score": "71%",
-                 "what_worked": "Regional refugee compact secured pledges.",
-                 "funding_secured": "$3.4B"},
-                {"historical_crisis": "CAR Conflict (2013)", "similarity_score": "63%",
-                 "what_worked": "Cluster activation + media advocacy.",
-                 "funding_secured": "$0.6B"},
-                {"historical_crisis": "South Sudan Famine (2017)", "similarity_score": "57%",
-                 "what_worked": "IPC Phase 5 declaration → emergency response.",
-                 "funding_secured": "$1.1B"},
-            ]
-
-        for m in matches:
-            sv = int(str(m['similarity_score']).replace('%', ''))
-            sc3 = GREEN if sv >= 80 else (AMBER if sv >= 65 else MUTED)
-            st.markdown(f"""
-            <div class="rag-card">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div class="rag-card-title">{m['historical_crisis']}</div>
-                    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{sc3};">{m['similarity_score']} match</span>
-                </div>
-                <div class="rag-worked">✓ {m['what_worked']}</div>
-                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{GREEN};margin-top:3px;">Funding secured: {m['funding_secured']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown(f'<div class="powered-by">◈ Actian VectorAI · matched against UN HRP documents</div>', unsafe_allow_html=True)
-
-    # ── Brief Generator ──
-    with pan_r:
-        st.markdown('<span class="section-label">AI Briefs · Gemini 2.5 Flash</span>', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Ready-to-Use Briefs</div>', unsafe_allow_html=True)
-
-        tab_d, tab_j, tab_u = st.tabs(["DONOR ROI", "JOURNALIST", "UN COORDINATOR"])
-
-        crisis_data = {'iso3': iso, 'Crisis_Severity_Score': sc,
-                       'funding_required': req, 'funding_received': rcvd}
-
-        for tab_obj, audience_key, audience_label, audience_desc in [
-            (tab_d, 'donor',      'Donor Brief',      'For donors: impact and return on investment.'),
-            (tab_j, 'journalist', 'Journalist Brief',  'For journalists: the untold story.'),
-            (tab_u, 'un',         'UN Brief',          'For UN coordinators: field-ready guidance.'),
-        ]:
-            with tab_obj:
-                st.markdown(f'<div style="font-family:\'DM Sans\',sans-serif;font-size:11px;color:{MUTED};margin-bottom:10px;">{audience_desc}</div>', unsafe_allow_html=True)
-                btn_key = f"gen_{audience_key}_{iso}"
-                cache_key = f"brief_{audience_key}_{iso}"
-                if st.button(f"Generate {audience_label}", key=btn_key, use_container_width=True):
-                    with st.spinner(f"Generating via Gemini 2.5 Flash..."):
-                        try:
-                            briefs = generate_safety_brief_prompts(crisis_data, max(opt_lives, 1000))
-                            st.session_state[cache_key] = briefs[f'{audience_key}_brief']
-                        except Exception as e:
-                            st.session_state[cache_key] = f"Generation error: {str(e)[:200]}"
-                if cache_key in st.session_state and st.session_state[cache_key]:
-                    st.markdown(
-                        f'<div style="font-family:\'DM Sans\',sans-serif;font-size:12px;color:{TEXT};'
-                        f'line-height:1.7;padding:12px;background:rgba(22,31,51,0.5);'
-                        f'border-radius:6px;border:1px solid {BORDER};margin-top:8px;">'
-                        f'{st.session_state[cache_key]}</div>',
-                        unsafe_allow_html=True
-                    )
-
-        st.markdown(f'<div class="powered-by">◈ Gemini 2.5 Flash · tailored for donors, press, and UN</div>', unsafe_allow_html=True)
-
     st.markdown('</div>', unsafe_allow_html=True)
+
+
 
 
 # ─── PAGE 3: ALLOCATION SIMULATOR ─────────────────────────────────────────────
 def page_allocation_simulator(df):
-    st.markdown('<div style="padding:20px 0;">', unsafe_allow_html=True)
+    _is_light = st.session_state.get('theme', 'dark') == 'light'
+    _pg_bg    = "rgba(0,0,0,0.04)"       if _is_light else "rgba(255,255,255,0.025)"
+    _pg_bdr   = "rgba(0,0,0,0.08)"       if _is_light else "rgba(255,255,255,0.07)"
+    _pg_text  = "#0A1628"                 if _is_light else "rgba(255,255,255,0.85)"
+    _pg_dim   = "rgba(10,22,40,0.38)"    if _is_light else "rgba(255,255,255,0.25)"
+    _pg_dimmer= "rgba(10,22,40,0.25)"    if _is_light else "rgba(255,255,255,0.15)"
+    _track_bg  = "rgba(0,0,0,0.06)"      if _is_light else "rgba(255,255,255,0.06)"
+    _track_fill= "#C8372D"               if _is_light else "#E53935"
 
+    st.markdown('<div style="padding:64px 0 0;">', unsafe_allow_html=True)
+
+    # ── Page header (centered, same style as hero) ──
     st.markdown(f"""
-    <span class="section-label">Allocation Simulator · Databricks</span>
-    <div class="section-title" style="font-size:22px;">Budget Optimizer</div>
-    <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{MUTED};max-width:600px;line-height:1.6;margin-bottom:20px;">
-        Given a donor budget, BLINDSPOT allocates across active crises to maximize lives saved—accounting for diminishing returns and conflict-based constraints.
+    <div style="text-align:center;padding:0 0 48px;border-bottom:1px solid {_pg_bdr};margin-bottom:40px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:400;
+                    letter-spacing:4px;text-transform:uppercase;color:{_track_fill};margin-bottom:20px;">
+            ALLOCATION SIMULATOR &nbsp;&middot;&nbsp; DATABRICKS SLSQP
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:clamp(36px,5vw,64px);font-weight:700;
+                    color:{'#0A1628' if _is_light else '#FFFFFF'};line-height:1.05;letter-spacing:-1px;margin-bottom:16px;">
+            Budget Optimizer
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:17px;font-weight:300;
+                    color:{_pg_dim};max-width:560px;margin:0 auto;line-height:1.65;">
+            Given a donor budget, BLINDSPOT allocates across active crises to maximize
+            lives saved — accounting for diminishing returns and conflict-access constraints.
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
+    # ── Budget tracker card ──
+    budget_pct = round((st.session_state.opt_budget - 10) / (500 - 10) * 100, 1)
+    # Tick markers
+    ticks_html = ""
+    for tick in [10, 100, 200, 300, 400, 500]:
+        pct = round((tick - 10) / (500 - 10) * 100, 1)
+        ticks_html += f'<div style="position:absolute;left:{pct}%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="width:1px;height:6px;background:{_pg_bdr};"></div><span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:{_pg_dimmer};letter-spacing:1px;">${tick}M</span></div>'
+
+    st.markdown(f"""
+    <div style="background:{_pg_bg};border:1px solid {_pg_bdr};border-radius:12px;
+                padding:32px 40px 28px;margin-bottom:24px;text-align:center;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;
+                    text-transform:uppercase;color:{_pg_dim};margin-bottom:16px;">
+            DONOR BUDGET ALLOCATION
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:56px;font-weight:700;
+                    color:{_track_fill};line-height:1;letter-spacing:-1px;margin-bottom:4px;">
+            ${st.session_state.opt_budget}M
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_pg_dimmer};margin-bottom:28px;">
+            USD {st.session_state.opt_budget * 1_000_000:,.0f}
+        </div>
+        <div style="position:relative;height:6px;background:{_track_bg};border-radius:3px;margin:0 0 28px;">
+            <div style="position:absolute;left:0;top:0;height:100%;width:{budget_pct}%;
+                        background:linear-gradient(90deg,{_track_fill}88,{_track_fill});
+                        border-radius:3px;transition:width 0.3s;"></div>
+            <div style="position:absolute;top:-4px;left:{budget_pct}%;transform:translateX(-50%);
+                        width:14px;height:14px;border-radius:50%;background:{_track_fill};
+                        box-shadow:0 0 8px {_track_fill}88;"></div>
+        </div>
+        <div style="position:relative;height:20px;margin-bottom:4px;">
+            {ticks_html}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Slider + Run button ──
     ctrl1, ctrl2 = st.columns([3, 1], gap="large")
     with ctrl1:
         budget_m = st.slider(
@@ -1830,6 +2208,7 @@ def page_allocation_simulator(df):
     with ctrl2:
         st.markdown('<div style="height:26px;"></div>', unsafe_allow_html=True)
         run_clicked = st.button("▶ RUN OPTIMIZER", key="run_opt_btn", use_container_width=True)
+
 
     if run_clicked:
         total_budget = budget_m * 1_000_000
@@ -1883,7 +2262,7 @@ def page_allocation_simulator(df):
                 </div>
                 """, unsafe_allow_html=True)
 
-        st.markdown('<div style="height:20px;"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:28px;"></div>', unsafe_allow_html=True)
 
         # Sankey
         sk_l, sk_r = st.columns(2, gap="medium")
@@ -1944,139 +2323,311 @@ def page_allocation_simulator(df):
 
     else:
         st.markdown(f"""
-        <div style="text-align:center;padding:70px 0;border:1px dashed {BORDER};border-radius:8px;margin-top:20px;">
-            <div style="font-family:'Syne',sans-serif;font-size:28px;color:{DIM};margin-bottom:10px;">◉</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{DIM};text-transform:uppercase;letter-spacing:2px;">
-                Set budget above and click Run Optimizer
-            </div>
+        <div style="text-align:center;padding:80px 0;border:1px solid {BORDER};border-radius:12px;margin-top:8px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{DIM};
+                        letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;">◉ &nbsp; optimizer ready</div>
+            <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:600;
+                        color:rgba(255,255,255,0.15);margin-bottom:8px;">Set budget &amp; click Run</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{DIM};">SLSQP · diminishing returns · conflict-access penalty</div>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
 
-# ─── PAGE 4: METHODOLOGY ─────────────────────────────────────────────────────
+# ─── PAGE 4: HELP & FEATURES ─────────────────────────────────────────────────
 def page_methodology():
+    _il = st.session_state.get('theme', 'dark') == 'light'
+    _bdr   = "rgba(0,0,0,0.08)"    if _il else "rgba(255,255,255,0.07)"
+    _card  = "rgba(0,0,0,0.03)"    if _il else "rgba(255,255,255,0.025)"
+    _text  = "#0A1628"              if _il else "rgba(255,255,255,0.85)"
+    _dim   = "rgba(10,22,40,0.38)" if _il else "rgba(255,255,255,0.22)"
+    _white = "#0A1628"              if _il else "#FFFFFF"
+    _dimmer= "rgba(10,22,40,0.20)" if _il else "rgba(255,255,255,0.12)"
+
     st.markdown('<div style="padding:20px 0;">', unsafe_allow_html=True)
 
+    # ── Page header ──
     st.markdown(f"""
-    <span class="section-label">Methodology & Architecture</span>
-    <div class="section-title" style="font-size:22px;">How BLINDSPOT Works</div>
-    <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{MUTED};max-width:620px;line-height:1.7;margin-bottom:24px;">
-        A 5-layer intelligence system replacing media-driven funding allocation with statistically rigorous
-        severity scoring, constraint-based optimization, and LLM-assisted decision communication.
+    <div style="text-align:center;padding:56px 0 40px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:4px;
+                    text-transform:uppercase;color:{_dim};margin-bottom:14px;">
+            DOCUMENTATION &nbsp;·&nbsp; BLINDSPOT INTELLIGENCE
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:56px;font-weight:700;
+                    color:{_white};line-height:1.05;margin-bottom:16px;">
+            Help & Features
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:18px;color:{_dim};max-width:560px;
+                    margin:0 auto;line-height:1.7;">
+            Everything you need to navigate BLINDSPOT and get the most out of every feature.
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
     # Layer 1
-    st.markdown(f'<div class="section-title">Layer 1 · Crisis Severity Score</div>', unsafe_allow_html=True)
+    # ── AI Chat Callout (big hero feature) ──
     st.markdown(f"""
-    <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:{TEXT};line-height:1.7;margin-bottom:10px;max-width:700px;">
-        Composite 0–100 score computed via PCA over 6 humanitarian signals.
-        PCA ensures no single signal dominates — the score reflects the statistical
-        structure of the multi-dimensional crisis profile. Computed on Databricks.
-    </div>
-    <div class="formula-block">
-        Severity_Score = Normalize_0_100( PCA₁(<br>
-        &nbsp;&nbsp;HumanitarianNeed, ConflictIntensity, FoodSecurityPhase,<br>
-        &nbsp;&nbsp;DisplacementVolume, FundingCoverageGap, InverseMediaAttention<br>
-        ))<br><br>
-        Red Zone = Score &gt; 75 AND Coverage &lt; 30%<br>
-        Scaler: StandardScaler(Z-scores) → PCA(n_components=1) → MinMax[0,100]
+    <div style="margin:0 0 56px;padding:36px 40px;background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(16,185,129,0.08));
+                border:1px solid rgba(59,130,246,0.25);border-radius:14px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;right:0;width:180px;height:180px;
+                    background:radial-gradient(circle,rgba(59,130,246,0.15),transparent 70%);
+                    border-radius:50%;transform:translate(40px,-40px);"></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;
+                    text-transform:uppercase;color:{BLUE};margin-bottom:12px;font-weight:600;">
+            ◎ BUILT-IN AI ASSISTANT
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:700;
+                    color:{_white};margin-bottom:14px;line-height:1.2;">
+            💬 Your AI Guide is always one click away
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:17px;color:{_text};
+                    line-height:1.8;max-width:700px;margin-bottom:20px;">
+            Look for the <b style="color:{BLUE};">chat bubble in the bottom-left corner</b> — it's the
+            BLINDSPOT AI Agent, powered by <b style="color:{GREEN};">Gemini 2.5 Flash</b>.
+            It knows everything about the data, methodology, and all the charts on every page.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;max-width:720px;">
+            <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.18);
+                        border-radius:8px;padding:14px 16px;">
+                <div style="font-size:20px;margin-bottom:6px;">📊</div>
+                <div style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:{_white};margin-bottom:4px;">Explain Charts</div>
+                <div style="font-family:'DM Sans',sans-serif;font-size:14px;color:{_dim};line-height:1.5;">
+                    "What does the radar chart on the detail page mean?" — it will walk you through every axis.
+                </div>
+            </div>
+            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.18);
+                        border-radius:8px;padding:14px 16px;">
+                <div style="font-size:20px;margin-bottom:6px;">🌍</div>
+                <div style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:{_white};margin-bottom:4px;">Query Crisis Data</div>
+                <div style="font-family:'DM Sans',sans-serif;font-size:14px;color:{_dim};line-height:1.5;">
+                    "Why is Sudan rated so high?" or "Which countries have the biggest funding gap?"
+                </div>
+            </div>
+            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.18);
+                        border-radius:8px;padding:14px 16px;">
+                <div style="font-size:20px;margin-bottom:6px;">🧠</div>
+                <div style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:{_white};margin-bottom:4px;">Understand Scores</div>
+                <div style="font-family:'DM Sans',sans-serif;font-size:14px;color:{_dim};line-height:1.5;">
+                    "How is the severity score calculated?" or "What does 67% funding ratio mean?"
+                </div>
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Signals table
-    rows = [
-        ("Humanitarian Need Magnitude", "FTS · OCHA",   "People in need, IPC Phase 3+ population", "~25%"),
-        ("Conflict Intensity",          "UCDP GED",      "Fatalities (rolling 30-day count)",       "~20%"),
-        ("Food Security Phase",         "IPC Global",    "Phase 3+ population count by country",    "~20%"),
-        ("Displacement Volume",         "IDMC",          "IDP + refugee outflow stock",             "~15%"),
-        ("Funding Coverage Gap",        "CBPF / FTS",    "1 − (funding_received / funding_required)","~12%"),
-        ("Inverse Media Attention",     "ReliefWeb API", "1 − normalized ReliefWeb article count",  "~8%"),
+    # ── Section: The 4 Pages ──
+    st.markdown(f"""
+    <div style="text-align:center;margin-bottom:28px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;
+                    text-transform:uppercase;color:{_dim};margin-bottom:8px;">NAVIGATION</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:{_white};">
+            The 4 Pages
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    pages_data = [
+        ("🌍", "Command Center", AMBER,
+         "The main dashboard. Shows a live world map of every active crisis, colour-coded by severity. The large red number at the top tells you how many lives are at stake across all crises right now.",
+         ["Hover over any country bubble to see its severity score and funding ratio",
+          "The KPI strip shows global totals — people in need, total funding gap, crises tracked",
+          "Use the top-right navigation to jump to any page"]),
+        ("🔍", "Crisis Deep Dive", BLUE,
+         "Select any country to see its complete intelligence profile — severity breakdown, funding status, IPC food-security phase, and AI-generated briefs for three different audiences.",
+         ["Use the country dropdown at the top to switch crises instantly",
+          "The 3 persona cards (Donor · Journalist · UN) each have a green 'Generate' button — click to produce a tailored AI brief in seconds",
+          "Scroll down to see historical analogues (What Worked Before) and crisis visualisation charts",
+          "The Severity Radar shows how the crisis scores across 6 humanitarian signals"]),
+        ("⚙️", "Budget Optimizer", RED,
+         "Set a hypothetical budget (10M–500M USD) and run the SLSQP optimiser. It figures out the mathematically optimal allocation across all 54 active crises to maximise projected lives saved.",
+         ["Drag the budget slider then click Run Optimization",
+          "The Sankey diagram shows how money flows to each crisis",
+          "Compare optimised allocation vs current UN allocation side by side",
+          "The result shows total projected lives saved under your budget"]),
+        ("❓", "Help & Features", GREEN,
+         "This page — your guide to everything BLINDSPOT can do. Return here any time you're unsure about a feature or want a reminder of how the AI assistant works.",
+         ["Use the AI chat (bottom-left) to ask follow-up questions after reading any section",
+          "The AI assistant is domain-restricted — it only answers questions about humanitarian data and this system"]),
     ]
-    tbl = f"""<table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:10px;margin:10px 0 20px;">
-    <thead><tr style="border-bottom:1px solid {BORDER};">
-        <th style="text-align:left;padding:7px 12px;color:{MUTED};text-transform:uppercase;letter-spacing:1.2px;font-weight:500;">Signal</th>
-        <th style="text-align:left;padding:7px 12px;color:{MUTED};text-transform:uppercase;letter-spacing:1.2px;font-weight:500;">Source</th>
-        <th style="text-align:left;padding:7px 12px;color:{MUTED};text-transform:uppercase;letter-spacing:1.2px;font-weight:500;">Metric</th>
-        <th style="text-align:right;padding:7px 12px;color:{MUTED};text-transform:uppercase;letter-spacing:1.2px;font-weight:500;">PCA Weight</th>
-    </tr></thead><tbody>"""
-    for sig, src, met, wt in rows:
-        tbl += f"""<tr style="border-bottom:1px solid {BORDER}18;">
-            <td style="padding:7px 12px;color:{TEXT};">{sig}</td>
-            <td style="padding:7px 12px;color:{BLUE};">{src}</td>
-            <td style="padding:7px 12px;color:{MUTED};">{met}</td>
-            <td style="padding:7px 12px;text-align:right;color:{AMBER};">{wt}</td>
-        </tr>"""
-    tbl += "</tbody></table>"
-    st.markdown(tbl, unsafe_allow_html=True)
 
-    # Layer 2
-    st.markdown(f'<div class="section-title">Layer 2 · Allocation Optimizer</div>', unsafe_allow_html=True)
-    st.markdown(f"""
-    <div class="formula-block">
-        <b>Problem:</b> Given budget B and N active crises, find allocation vector x* such that:<br><br>
-        maximize  &nbsp; Σᵢ LivesSaved(xᵢ, Severityᵢ, AccessPenaltyᵢ)<br><br>
-        where  &nbsp; LivesSaved(x, s, p) = √x × 1000 / ( BaseCost(s) × (1 + AccessPenalty) )<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BaseCost(s) = 50,000 / ( (s/10)² + 0.1 )<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; AccessPenalty = fatalities / max_fatalities<br><br>
-        subject to:  Σᵢ xᵢ = B &nbsp; (budget equality)<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  xᵢ ≥ 0 &nbsp; (non-negativity)<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  xᵢ ≤ min(UnmetNeedᵢ, B) &nbsp; (absorptive capacity)<br><br>
-        Solver: SciPy SLSQP · Initial guess: equal distribution · Runtime: &lt;2s for N=54
-    </div>
-    """, unsafe_allow_html=True)
+    pg1, pg2 = st.columns(2, gap="medium")
+    pg3, pg4 = st.columns(2, gap="medium")
+    page_cols_rows = [(pg1, pages_data[0]), (pg2, pages_data[1]), (pg3, pages_data[2]), (pg4, pages_data[3])]
 
-    st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
-
-    # Tech stack
-    st.markdown(f'<div class="section-title">Technology Stack</div>', unsafe_allow_html=True)
-    tc1, tc2, tc3, tc4 = st.columns(4, gap="medium")
-    for col, name, icon, desc, color in [
-        (tc1, "Databricks",       "⬡", "Severity scoring + SLSQP optimization on managed Spark compute. Unity Catalog for dataset lineage.", BLUE),
-        (tc2, "Actian VectorAI",  "◈", "Semantic search over historical UN HRP documents. Finds 5 most comparable past crises.", "#9B5DE5"),
-        (tc3, "Gemini AI",        "◉", "Three-audience brief generation — donor ROI, journalist pitch, UN operations. Model: gemini-2.5-flash.", "#34D399"),
-        (tc4, "Streamlit",        "▣", "Real-time data dashboard. Plotly geospatial and analytics charts. Hot-reload development.", RED),
-    ]:
+    for col, (icon, title, accent, desc, tips) in page_cols_rows:
+        tips_html = "".join(f'<li style="margin-bottom:6px;">{t}</li>' for t in tips)
         with col:
             st.markdown(f"""
-            <div class="tech-card">
-                <div style="font-size:22px;margin-bottom:8px;color:{color};">{icon}</div>
-                <div class="tc-name" style="color:{color};">{name}</div>
-                <div class="tc-desc">{desc}</div>
+            <div style="padding:24px;background:{_card};border:1px solid {_bdr};border-top:3px solid {accent};
+                        border-radius:10px;margin-bottom:16px;min-height:280px;">
+                <div style="font-size:28px;margin-bottom:10px;">{icon}</div>
+                <div style="font-family:'Syne',sans-serif;font-size:19px;font-weight:700;
+                            color:{_white};margin-bottom:10px;">{title}</div>
+                <div style="font-family:'DM Sans',sans-serif;font-size:15px;color:{_text};
+                            line-height:1.75;margin-bottom:14px;">{desc}</div>
+                <ul style="font-family:'DM Sans',sans-serif;font-size:14px;color:{_dim};
+                           padding-left:18px;line-height:1.7;margin:0;">
+                    {tips_html}
+                </ul>
             </div>
             """, unsafe_allow_html=True)
 
-    st.markdown('<div style="height:20px;"></div>', unsafe_allow_html=True)
-
-    # Data sources
-    st.markdown(f'<div class="section-title">Data Sources</div>', unsafe_allow_html=True)
-    sources = ["OCHA FTS", "CBPF", "ACLED", "IPC Global", "IDMC", "ReliefWeb API", "UCDP GED", "UN HRP Documents"]
-    st.markdown('<div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 18px;">' +
-                ''.join(f'<span class="source-badge">{s}</span>' for s in sources) +
-                '</div>', unsafe_allow_html=True)
-
-    # Competition
-    st.markdown(f'<div class="section-title">About This Project</div>', unsafe_allow_html=True)
+    # ── Section: Key Features ──
     st.markdown(f"""
-    <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:{MUTED};line-height:2;margin-bottom:8px;">
-        <strong style="color:{TEXT};">Hacklytics 2026</strong> — Georgia Tech’s data science hackathon.<br>
-        Challenge: <strong style="color:{BLUE};">Databricks × UN</strong> — Humanitarian AI for resource allocation.<br>
-        Tracks: <strong style="color:{TEXT};">Actian VectorAI</strong> ·
-        <strong style="color:{TEXT};">SafetyKit</strong> ·
-        <strong style="color:{TEXT};">Figma Make</strong>
+    <div style="text-align:center;margin-top:56px;margin-bottom:28px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;
+                    text-transform:uppercase;color:{_dim};margin-bottom:8px;">UNDER THE HOOD</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:{_white};">
+            Key Features & How They Work
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Disclaimer
+    feats = [
+        ("◈", "Severity Score (0–100)", AMBER,
+         "Each crisis gets a composite score built from 6 humanitarian signals using Principal Component Analysis (PCA) on Databricks. This prevents any single metric from dominating — the score reflects the full multi-dimensional crisis profile.",
+         "Food insecurity · Conflict intensity · Displacement · Funding gap · Media attention · Human need"),
+        ("◎", "AI Persona Briefs", GREEN,
+         "On the Crisis Detail page, one click generates a purpose-built brief for three audiences — a donor ROI pitch, a journalist story angle, and a UN operational field brief. Each uses the live crisis data as context. Powered by Gemini 2.5 Flash.",
+         "Donor · Journalist · UN Coordinator · Gemini 2.5 Flash"),
+        ("⬡", "Budget Optimizer", BLUE,
+         "Uses SciPy's SLSQP (Sequential Least Squares Programming) solver to maximise lives saved across all active crises under a given budget constraint. Factors in access penalties for conflict zones and absorptive capacity limits.",
+         "Databricks SLSQP · Constraint-based · Diminishing returns model"),
+        ("⬡", "Similar Crisis Lookup (RAG)", "#9B5DE5",
+         "When you're on a crisis page, BLINDSPOT uses Actian VectorAI to semantically search historical UN HRP documents and find the 4 most similar past crises — along with what response strategies actually worked and how much funding was secured.",
+         "Actian VectorAI · UN HRP documents · Semantic similarity"),
+    ]
+
+    fa, fb = st.columns(2, gap="medium")
+    fc, fd = st.columns(2, gap="medium")
+    feat_col_rows = [(fa, feats[0]), (fb, feats[1]), (fc, feats[2]), (fd, feats[3])]
+
+    for col, (icon, title, accent, desc, tags) in feat_col_rows:
+        tag_html = "".join(
+            f'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;background:rgba(255,255,255,0.05);'
+            f'border:1px solid {_bdr};border-radius:3px;padding:2px 8px;color:{accent};margin:2px;">{t.strip()}</span>'
+            for t in tags.split("·")
+        )
+        with col:
+            st.markdown(f"""
+            <div style="padding:22px;background:{_card};border:1px solid {_bdr};border-radius:10px;margin-bottom:16px;">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;color:{accent};margin-bottom:10px;">{icon}</div>
+                <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;
+                            color:{_white};margin-bottom:10px;">{title}</div>
+                <div style="font-family:'DM Sans',sans-serif;font-size:15px;color:{_text};
+                            line-height:1.8;margin-bottom:14px;">{desc}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;">{tag_html}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ── Section: Data Sources ──
     st.markdown(f"""
-    <div class="disclaimer-box">
-        <strong style="color:{RED};font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;">⚠ Decision Support Only</strong><br><br>
-        BLINDSPOT is a decision-support tool. All severity scores, allocation recommendations, and AI-generated
-        briefs are analytical outputs derived from publicly available humanitarian data. Final allocation decisions
-        remain with licensed humanitarian coordinators and institutional donors.<br><br>
-        <em>BLINDSPOT exposes what the data shows. Action is yours. Every misallocated dollar has a body count.</em>
+    <div style="text-align:center;margin-top:56px;margin-bottom:24px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;
+                    text-transform:uppercase;color:{_dim};margin-bottom:8px;">VERIFIED DATA</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:{_white};">
+            Where the Data Comes From
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:15px;color:{_dim};margin-top:8px;">
+            All data is sourced from internationally recognised humanitarian agencies. No estimates, no media.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    src_data = [
+        ("UN OCHA FTS", "Funding Tracking System", BLUE, "Live funding requirements and allocations for every active humanitarian response plan."),
+        ("CBPF", "Country-Based Pooled Funds", BLUE, "Emergency pooled fund disbursements for rapid on-the-ground response."),
+        ("IPC Global", "Food Security Phase", AMBER, "Integrated Phase Classification for food security — crisis to famine severity."),
+        ("UCDP GED", "Conflict Fatalities", RED, "Uppsala Conflict Data Program — georeferenced conflict event data."),
+        ("IDMC", "Displacement Figures", AMBER, "Internal Displacement Monitoring Centre — IDP and refugee outflow data."),
+        ("ReliefWeb API", "Media Attention Index", MUTED, "Article count per country — inverted to measure media blind spots."),
+        ("Actian VectorAI", "Historical Analogues", "#9B5DE5", "UN HRP documents vectorised for semantic crisis comparison."),
+        ("Databricks", "Compute & Scoring", GREEN, "Managed Spark environment for PCA scoring and SLSQP optimisation."),
+    ]
+
+    r1c = st.columns(4, gap="small")
+    r2c = st.columns(4, gap="small")
+    for i, (name, sub, ac, desc) in enumerate(src_data):
+        col = r1c[i] if i < 4 else r2c[i - 4]
+        with col:
+            st.markdown(f"""
+            <div style="padding:16px;background:{_card};border:1px solid {_bdr};border-radius:8px;
+                        margin-bottom:8px;height:100%;box-sizing:border-box;">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{ac};
+                            text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-bottom:6px;">{name}</div>
+                <div style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+                            color:{_white};margin-bottom:6px;">{sub}</div>
+                <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_dim};line-height:1.5;">{desc}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ── Section: Tips ──
+    st.markdown(f"""
+    <div style="text-align:center;margin-top:56px;margin-bottom:24px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;
+                    text-transform:uppercase;color:{_dim};margin-bottom:8px;">PRO TIPS</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:{_white};">
+            Getting the Most Out of BLINDSPOT
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    tips_list = [
+        ("💬", GREEN,  "Ask the chatbot first", "Before clicking around, open the AI chat (bottom-left) and ask 'What should I look at first?' — it will orient you based on the current data."),
+        ("🔴", RED,    "Start with Red Zone crises", "On the Command Center map, red circles = severity > 75 AND funding < 30%. These are the most urgent and most underfunded — start your deep dives here."),
+        ("⚙️", AMBER,  "Test extreme budgets", "On the Budget Optimizer, try $10M (bare minimum) and $500M (full coverage) to see how the allocation model behaves at both ends of the scale."),
+        ("📰", BLUE,   "Share the journalist brief", "The Journalist persona brief on the Crisis Detail page is pre-framed for a news pitch. Hit Generate and share directly — it cites real data and is ready to use."),
+        ("📊", "#9B5DE5", "Read the radar chart", "The Severity Radar on the Crisis Detail page shows all 6 signal dimensions. A narrow, uneven shape means the crisis is driven by one dominant factor — dig into that."),
+        ("🔍", AMBER,  "Use What Worked Before", "The historical analogues section matches the current crisis to past situations by vector similarity. The strategies listed are evidence-based — not guesses."),
+    ]
+
+    ta, tb, tc = st.columns(3, gap="medium")
+    td, te, tf = st.columns(3, gap="medium")
+    tip_col_rows = [(ta, tips_list[0]), (tb, tips_list[1]), (tc, tips_list[2]),
+                    (td, tips_list[3]), (te, tips_list[4]), (tf, tips_list[5])]
+    for col, (icon, ac, tip_title, tip_body) in tip_col_rows:
+        with col:
+            st.markdown(f"""
+            <div style="padding:20px;background:{_card};border:1px solid {_bdr};border-left:3px solid {ac};
+                        border-radius:8px;margin-bottom:12px;">
+                <div style="font-size:22px;margin-bottom:8px;">{icon}</div>
+                <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;
+                            color:{_white};margin-bottom:8px;">{tip_title}</div>
+                <div style="font-family:'DM Sans',sans-serif;font-size:14px;color:{_text};
+                            line-height:1.7;">{tip_body}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ── Disclaimer ──
+    st.markdown(f"""
+    <div style="margin-top:56px;padding:28px 32px;background:rgba(229,57,53,0.05);
+                border:1px solid rgba(229,57,53,0.18);border-radius:10px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+                    letter-spacing:2px;color:{RED};margin-bottom:12px;font-weight:600;">⚠ Decision Support Only</div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:15px;color:{_text};line-height:1.8;">
+            BLINDSPOT is an analytical tool. All severity scores, allocation recommendations, and AI-generated
+            briefs are derived from publicly available humanitarian data. Final allocation decisions remain with
+            licensed humanitarian coordinators and institutional donors.
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{RED};
+                    margin-top:14px;font-style:italic;">
+            BLINDSPOT exposes what the data shows. Action is yours. Every misallocated dollar has a body count.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── About ──
+    st.markdown(f"""
+    <div style="text-align:center;margin-top:40px;padding-bottom:32px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;
+                    letter-spacing:3px;color:{_dim};margin-bottom:6px;">
+            Hacklytics 2026 &nbsp;·&nbsp; Georgia Tech &nbsp;·&nbsp; Databricks × UN Challenge
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;
+                    letter-spacing:2px;color:{_dim};">
+            Tracks: Actian VectorAI &nbsp;·&nbsp; SafetyKit &nbsp;·&nbsp; Figma Make
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -2200,9 +2751,17 @@ render_navbar(df_crises)
 
 page = st.session_state.page
 if   page == 'command_center':       page_command_center(df_crises)
-elif page == 'crisis_detail':         page_crisis_detail(df_crises)
-elif page == 'allocation_simulator':  page_allocation_simulator(df_crises)
-elif page == 'methodology':           page_methodology()
+else:
+    # Remove hero block when navigating away from command center
+    components.html("""<script>
+(function(){var P=window.parent.document;
+var h=P.getElementById('bs-hero-block');if(h)h.remove();
+var s=P.getElementById('bs-hero-style');if(s)s.remove();
+})();
+</script>""", height=0)
+    if   page == 'crisis_detail':         page_crisis_detail(df_crises)
+    elif page == 'allocation_simulator':  page_allocation_simulator(df_crises)
+    elif page == 'methodology':           page_methodology()
 
 # ── Floating Chat Action Button ──
 _chat_open_js = 'true' if st.session_state.chat_open else 'false'
