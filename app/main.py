@@ -631,8 +631,33 @@ components.html("""
     })();
 
     /* Hover effects */
-    var LIFT_SEL = '.triage-row,.kpi-pill,.metric-summary,.impact-box,.tech-card,.rag-card,.identity-card,.metric-cell,.persona-card,.brief-card,.stat-card,[data-testid="stMetric"]';
-    var RING_SEL = 'a,button,[role="button"],.bs-nav-item,.bs-toggle,h1,h2,h3,select,input,textarea,[data-testid="stSelectbox"],[data-testid="stButton"],[data-testid="stTextInput"],[data-testid="stTextArea"],[data-testid="stTab"]';
+    var LIFT_SEL = [
+        '.triage-row','.kpi-pill','.metric-summary','.impact-box','.tech-card',
+        '.rag-card','.identity-card','.metric-cell',
+        /* Streamlit native components */
+        '[data-testid="stMetric"]','[data-testid="stDataFrame"]',
+        '[data-testid="stTable"]','[data-testid="stExpander"]',
+        '[data-testid="stForm"]','[data-testid="stImage"]',
+        '[data-testid="element-container"]',
+        /* Brief + detail cards emitted via st.markdown */
+        '.brief-card','.detail-card','.rag-result-card','.feature-card',
+        '.datasource-card','.tip-card','.page-card'
+    ].join(',');
+    var RING_SEL = [
+        'a','button','[role="button"]',
+        '.bs-nav-item','.bs-toggle',
+        'h1','h2','h3',
+        /* Streamlit interactive elements */
+        '[data-testid="stButton"] button',
+        '[data-testid="stSelectbox"]','[data-testid="stMultiselect"]',
+        '[data-testid="stTextInput"] input','[data-testid="stTextArea"] textarea',
+        '[data-testid="stSlider"]','[data-testid="stCheckbox"]',
+        '[data-testid="stRadio"]','[data-testid="stColorPicker"]',
+        '[data-testid="stTabs"] [role="tab"]',
+        'label','select','input[type="range"]',
+        /* Navigation items */
+        '[data-testid="stSidebarNavLink"]'
+    ].join(',');
 
     pd.addEventListener('mouseover', function (e) {
         var lift = e.target.closest(LIFT_SEL);
@@ -666,6 +691,15 @@ components.html("""
             idoc.addEventListener('mouseenter', function () {
                 dot.style.opacity='1'; ring.style.opacity='1';
             });
+            /* Propagate hover-enlargement for elements inside the iframe */
+            idoc.addEventListener('mouseover', function (e) {
+                var ro = e.target.closest('a,button,[role="button"],h1,h2,h3,label,input,select');
+                if (ro) { ring.classList.add('bs-hover'); }
+                else    { ring.classList.remove('bs-hover'); }
+            }, { passive: true });
+            idoc.addEventListener('mouseout', function () {
+                ring.classList.remove('bs-hover');
+            }, { passive: true });
         } catch(e) { /* cross-origin iframe — skip */ }
     }
 
@@ -728,7 +762,7 @@ def inject_theme_css():
   --text-h:  #0A1628;
   --mid:     #475569;
   --dim:     #64748B;
-  --red:     #C8372D;
+  --red:     #E53935;
   --amber:   #A16207;
   --green:   #0A7A56;
   --blue:    #0077B6;
@@ -761,11 +795,11 @@ h1,h2,h3,h4,h5,h6 { color: #0A1628 !important; }
     box-shadow: 0 4px 28px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.95) !important;
 }
 #bs-pill-nav .bs-logo { color: #0A1628 !important; }
-#bs-pill-nav .bs-logo em { color: #C8372D !important; }
+#bs-pill-nav .bs-logo em { color: #E53935 !important; }
 #bs-pill-nav .bs-sep { background: rgba(0,0,0,0.10) !important; }
 #bs-pill-nav .bs-nav-item { color: rgba(10,22,40,0.45) !important; }
 #bs-pill-nav .bs-nav-item:hover { color: #0A1628 !important; background: rgba(0,0,0,0.05) !important; }
-#bs-pill-nav .bs-nav-item.active { color: #C8372D !important; background: rgba(200,55,45,0.08) !important; }
+#bs-pill-nav .bs-nav-item.active { color: #E53935 !important; background: rgba(229,57,53,0.08) !important; }
 #bs-pill-nav .bs-toggle { color: rgba(10,22,40,0.40) !important; background: rgba(0,0,0,0.04) !important; }
 #bs-pill-nav .bs-toggle:hover { color: #0A1628 !important; background: rgba(0,0,0,0.08) !important; }
 #bs-pill-nav .bs-live-badge {
@@ -902,7 +936,7 @@ h1,h2,h3,h4,h5,h6 { color: #0A1628 !important; }
     border-bottom-color: rgba(0,0,0,0.08) !important;
 }
 [data-testid="stTabs"] [data-baseweb="tab"] { color: #475569 !important; }
-[data-testid="stTabs"] [aria-selected="true"] { color: #C8372D !important; border-color: #C8372D !important; }
+[data-testid="stTabs"] [aria-selected="true"] { color: #E53935 !important; border-color: #E53935 !important; }
 [data-testid="stTabs"] [data-baseweb="tab-panel"] {
     background: rgba(255,255,255,0.80) !important;
     border-color: rgba(0,0,0,0.08) !important;
@@ -1179,7 +1213,7 @@ def render_navbar(df):
       letter-spacing:2.5px; text-transform:uppercase;
       padding:0 16px 0 10px; user-select:none; cursor:pointer;
     }}
-    #bs-pill-nav .bsp-logo em {{ color:${{isLight?'#C8372D':'#E83D3D'}}; font-style:normal; }}
+    #bs-pill-nav .bsp-logo em {{ color:'#E53935'; font-style:normal; }}
     #bs-pill-nav .bsp-sep {{
       width:1px; height:20px; flex-shrink:0; margin:0 4px;
       background:${{isLight?'rgba(0,0,0,0.1)':'rgba(255,255,255,0.1)'}};
@@ -1337,15 +1371,15 @@ def page_command_center(df):
     # Theme-aware colors for components.html iframes (can't read CSS vars from parent)
     _is_light   = st.session_state.get('theme', 'dark') == 'light'
     _hero_bg    = "#FFFFFF"   if _is_light else "#05080F"
-    _hero_num   = "#C8372D"   if _is_light else "#E83D3D"
+    _hero_num   = "#E53935"   if _is_light else "#E53935"
     _hero_suf   = "#0A1628"   if _is_light else "#F1F5F9"
     _hero_amber = "#A16207"   if _is_light else "#F0A500"
     _hero_sub   = "#718096"   if _is_light else "#8494AD"
 
     # Hero inline color palette
     _h_border    = "rgba(0,0,0,0.08)"          if _is_light else "rgba(255,255,255,0.07)"
-    _h_eyebrow   = "#C8372D"                   if _is_light else "#E53935"
-    _h_num_c     = "#C8372D"                   if _is_light else "#E53935"
+    _h_eyebrow   = "#E53935"                   if _is_light else "#E53935"
+    _h_num_c     = "#E53935"                   if _is_light else "#E53935"
     _h_word_c    = "#0A1628"                   if _is_light else "#FFFFFF"
     _h_subtitle  = "rgba(10,22,40,0.50)"       if _is_light else "rgba(255,255,255,0.45)"
     _h_desc_c    = "rgba(10,22,40,0.48)"       if _is_light else "rgba(255,255,255,0.50)"
@@ -1492,7 +1526,7 @@ def page_command_center(df):
 
         def _sev_hex(s):
             if s >= 80: return '#FF2020'
-            if s >= 60: return '#E83D3D'
+            if s >= 60: return '#F06A35'
             if s >= 40: return '#F0A500'
             if s >= 20: return '#0DB37A'
             return '#2D74DA'
@@ -1534,7 +1568,7 @@ def page_command_center(df):
 <meta charset="utf-8">
 <style>
   * {{ margin:0; padding:0; box-sizing:border-box; }}
-  body {{ background:{_globe_body_bg}; overflow:hidden; }}
+  body {{ background:{_globe_body_bg}; overflow:hidden; cursor:crosshair; }}
   #g {{ width:100%; height:580px; }}
   #tip {{
     position:fixed; display:none; pointer-events:none; z-index:9999;
@@ -1550,13 +1584,20 @@ def page_command_center(df):
     line-height:2;
   }}
   .lc {{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:middle; }}
+  #pause-hint {{
+    position:absolute; top:10px; right:14px;
+    font-family:'IBM Plex Mono',monospace; font-size:9px; color:{_globe_legend_c};
+    opacity:0; transition:opacity .4s;
+    letter-spacing:1px; text-transform:uppercase;
+  }}
 </style>
 </head><body>
 <div id="g"></div>
 <div id="tip"></div>
+<div id="pause-hint">⏸ PAUSED – READING CRISIS</div>
 <div id="legend">
   <span class="lc" style="background:#E53935"></span>Critical (&gt;80)&nbsp;&nbsp;
-  <span class="lc" style="background:#E53935"></span>High (60–80)&nbsp;&nbsp;
+  <span class="lc" style="background:#F06A35"></span>High (60–80)&nbsp;&nbsp;
   <span class="lc" style="background:#F0A500"></span>Elevated (40–60)&nbsp;&nbsp;
   <span class="lc" style="background:#0DB37A"></span>Moderate (20–40)&nbsp;&nbsp;
   <span class="lc" style="background:#2D74DA"></span>Low (&lt;20)
@@ -1566,38 +1607,39 @@ def page_command_center(df):
 <script>
 const DATA = {markers_js};
 
-const tip  = document.getElementById('tip');
-const cont = document.getElementById('g');
+const tip       = document.getElementById('tip');
+const cont      = document.getElementById('g');
+const pauseHint = document.getElementById('pause-hint');
 
+// ── Remap severity color to unified palette ──
+function remapColor(c) {{
+  if (c === '#FF2020') return '#E53935';
+  if (c === '#E83D3D') return '#F06A35';
+  return c;
+}}
+const DATA2 = DATA.map(d => ({{ ...d, color: remapColor(d.color) }}));
 
 const world = Globe()(cont)
   .width(cont.offsetWidth)
   .height(580)
   .backgroundColor({_globe_bg_clear})
-  // No image texture — country polygons give us land/ocean contrast
   .globeImageUrl('')
   .atmosphereColor('{_globe_atm}')
   .atmosphereAltitude(0.15)
-  // ── pulsing ring crisis markers ──
-  .ringsData(DATA)
-  .ringLat(d => d.lat)
-  .ringLng(d => d.lng)
-  .ringColor(d => t => d.color + Math.round((1 - t) * 210).toString(16).padStart(2, '0'))
-  .ringMaxRadius(d => Math.max(1.5, d.radius * 22))
-  .ringPropagationSpeed(1.8)
-  .ringRepeatPeriod(d => 900 + (1 - Math.min(1, d.radius * 2)) * 1200)
-  .ringStroke(0.6)
-  // ── flat center dots for hover ──
-  .pointsData(DATA)
+  // ── Flat pulsing circles (no spikes) ──
+  .pointsData(DATA2)
   .pointLat(d => d.lat)
   .pointLng(d => d.lng)
   .pointColor(d => d.color)
-  .pointRadius(d => Math.max(0.3, d.radius * 0.7))
-  .pointAltitude(0)
-  .pointResolution(10)
+  .pointRadius(d => d.radius * 1.4)
+  .pointAltitude(0.001)
+  .pointResolution(20)
+  .pointsMerge(false)
   .pointLabel(d => '')
   .onPointHover((pt) => {{
     if (pt) {{
+      controls.autoRotate = false;
+      pauseHint.style.opacity = '1';
       tip.style.display = 'block';
       tip.innerHTML =
         '<b style="color:{_globe_tip_text};font-size:13px">' + pt.name + '</b><br>' +
@@ -1605,9 +1647,19 @@ const world = Globe()(cont)
         'Funded &nbsp;&nbsp;<span style="color:{_globe_legend_c}">' + pt.funded + '%</span><br>' +
         'People &nbsp;&nbsp;<span style="color:{_globe_legend_c}">' + pt.people + '</span>';
     }} else {{
+      controls.autoRotate = true;
+      pauseHint.style.opacity = '0';
       tip.style.display = 'none';
     }}
-  }});
+  }})
+  // ── Pulsing concentric rings at each crisis location ──
+  .ringsData(DATA2)
+  .ringLat(d => d.lat)
+  .ringLng(d => d.lng)
+  .ringColor(d => t => `${{d.color}}${{Math.round((1 - t) * 180).toString(16).padStart(2,'0')}}`)
+  .ringMaxRadius(d => d.radius * 7)
+  .ringPropagationSpeed(d => 1.2 + d.radius * 1.5)
+  .ringRepeatPeriod(d => 1800 + (1 - d.radius) * 1400);
 
 // Manually color the globe sphere (ocean)
 world.scene().traverse(obj => {{
@@ -1631,7 +1683,6 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
       .polygonAltitude(0.004);
   }});
 
-
 // Tip follows mouse
 document.addEventListener('mousemove', e => {{
   if (tip.style.display !== 'none') {{
@@ -1642,40 +1693,29 @@ document.addEventListener('mousemove', e => {{
   }}
 }});
 
-// ── Mouse-move responsive spin ──
+// ── Rotation controls ──
 const controls = world.controls();
 controls.enableDamping   = true;
 controls.dampingFactor   = 0.08;
 controls.autoRotate      = true;
-controls.autoRotateSpeed = 0.18;
+controls.autoRotateSpeed = 0.5;
 controls.enableZoom      = true;
 controls.zoomSpeed       = 1.2;
 controls.minDistance     = 150;
 controls.maxDistance     = 700;
 
 let overGlobe = false;
-cont.addEventListener('mouseenter', () => {{ overGlobe = true; }});
+cont.addEventListener('mouseenter', () => {{ overGlobe = true; controls.autoRotateSpeed = 0.3; }});
 cont.addEventListener('mouseleave', () => {{
   overGlobe = false;
-  controls.autoRotateSpeed = 0.18;
+  controls.autoRotateSpeed = 0.5;
+  controls.autoRotate = true;
+  pauseHint.style.opacity = '0';
 }});
 
 let _isDragging = false;
 cont.addEventListener('mousedown', () => {{ _isDragging = true; }});
 cont.addEventListener('mouseup',   () => {{ _isDragging = false; }});
-
-cont.addEventListener('mousemove', e => {{
-  if (!overGlobe) return;
-  const rect = cont.getBoundingClientRect();
-  const nx = (e.clientX - rect.left) / rect.width  * 2 - 1;
-  const ny = (e.clientY - rect.top)  / rect.height * 2 - 1;
-  controls.autoRotateSpeed = nx * 0.9;
-  if (!_isDragging) {{
-    const pov = world.pointOfView();
-    const tLat = Math.max(-80, Math.min(80, pov.lat - ny * 0.5));
-    world.pointOfView({{ lat: tLat, lng: pov.lng, altitude: pov.altitude }}, 80);
-  }}
-}});
 
 world.pointOfView({{ lat: 20, lng: 20, altitude: 2.6 }});
 </script>
@@ -2145,7 +2185,7 @@ def page_allocation_simulator(df):
     _pg_dim   = "rgba(10,22,40,0.38)"    if _is_light else "rgba(255,255,255,0.25)"
     _pg_dimmer= "rgba(10,22,40,0.25)"    if _is_light else "rgba(255,255,255,0.15)"
     _track_bg  = "rgba(0,0,0,0.06)"      if _is_light else "rgba(255,255,255,0.06)"
-    _track_fill= "#C8372D"               if _is_light else "#E53935"
+    _track_fill= "#E53935"               if _is_light else "#E53935"
 
     st.markdown('<div style="padding:64px 0 0;">', unsafe_allow_html=True)
 
@@ -2775,9 +2815,9 @@ var s=P.getElementById('bs-hero-style');if(s)s.remove();
 # ── Floating Chat Action Button ──
 _chat_open_js = 'true' if st.session_state.chat_open else 'false'
 _is_light_fab = st.session_state.get('theme', 'dark') == 'light'
-_fab_color     = "#C8372D" if _is_light_fab else "rgba(229,57,53,0.9)"
-_fab_hover     = "#A02820" if _is_light_fab else "rgba(229,57,53,1.0)"
-_fab_shadow    = "rgba(200,55,45,0.30)" if _is_light_fab else "rgba(229,57,53,0.35)"
+_fab_color     = "#E53935" if _is_light_fab else "rgba(229,57,53,0.9)"
+_fab_hover     = "#C0231E" if _is_light_fab else "rgba(229,57,53,1.0)"
+_fab_shadow    = "rgba(229,57,53,0.30)" if _is_light_fab else "rgba(229,57,53,0.35)"
 
 components.html(f"""
 <script>
