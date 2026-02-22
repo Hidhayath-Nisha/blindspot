@@ -86,10 +86,14 @@ for (crisis, iso3, year), group in rw.groupby(['crisis_name', 'crisis_iso3', 'ye
     })
 
 # --- From FTS: only include plans with actual funding > 0 ---
+fts['requirements'] = pd.to_numeric(fts['requirements'], errors='coerce').fillna(0)
+fts['funding']      = pd.to_numeric(fts['funding'],      errors='coerce').fillna(0)
+fts['percentFunded'] = pd.to_numeric(fts['percentFunded'], errors='coerce').fillna(0)
+fts['percentFunded'] = fts['percentFunded'].clip(0, 100)  # fix 1005% values
+
 fts_clean = fts[
-    fts['requirements'].notna() &
-    fts['funding'].notna() &
-    (fts['funding'].astype(float) > 0)
+    (fts['requirements'] > 0) &
+    (fts['funding'] > 0)
 ].copy()
 
 for _, row in fts_clean.iterrows():

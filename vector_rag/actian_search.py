@@ -21,13 +21,13 @@
 
 import pickle
 import logging
-import streamlit as st
+import os
 from cortex import CortexClient
 
 logging.basicConfig(level=logging.INFO)
 
 # Path to the saved TF-IDF vectorizer (trained on all historical UN documents)
-VECTORIZER_FILE = "/Users/sanchusri/blindspot/vector_rag/triage_vectorizer.pkl"
+VECTORIZER_FILE = os.path.join(os.path.dirname(__file__), "triage_vectorizer.pkl")
 
 # Name of the collection in Actian VectorAI DB
 COLLECTION = "crisis_documents"
@@ -103,6 +103,11 @@ def get_donor_brief(country, severity_score, total_idps,
     return {
         "headline":    (f"💀 {int(total_idps/1e6*10)/10}M people displaced. "
                         f"Only {funding_pct:.0f}% of need is funded."),
+        "story":       (f"These are families who fled conflict with nothing. "
+                    f"A severity score of {severity_score:.0f}/100 means this crisis "
+                    f"ranks among the worst on Earth right now. Yet "
+                    f"{100 - funding_pct:.0f}% of documented need remains unfunded."),
+
         "urgency":     (f"Severity score: {severity_score:.0f}/100 — "
                         f"one of the worst crises on Earth right now."),
         "funding_gap": f"${funding_gap_usd/1e6:.0f}M gap remains unfunded.",
