@@ -561,135 +561,6 @@ iframe { border: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ─── CUSTOM CURSOR ─────────────────────────────────────────────────────────────
-# Must use components.html() — st.markdown() does NOT execute <script> tags
-# (React's dangerouslySetInnerHTML strips them). The iframe reaches parent.document.
-components.html("""
-<script>
-(function () {
-    var p = window.parent;
-    var pd = p.document;
-
-    /* Guard: only initialise once across Streamlit re-renders */
-    if (p.__bsCursorInit) return;
-    p.__bsCursorInit = true;
-
-    /* ── Inject CSS into parent <head> ── */
-    var style = pd.createElement('style');
-    style.id  = 'bs-cur-style';
-    style.textContent =
-        '*, *::before, *::after { cursor: none !important; }' +
-
-        '#bs-cur-ring {' +
-        '  position:fixed; top:0; left:0; pointer-events:none; z-index:2147483647;' +
-        '  width:26px; height:26px; margin-left:-13px; margin-top:-13px;' +
-        '  border:2px solid #E53935; border-radius:50%;' +
-        '  transition: width .22s cubic-bezier(.25,.46,.45,.94),' +
-        '              height .22s cubic-bezier(.25,.46,.45,.94),' +
-        '              margin .22s cubic-bezier(.25,.46,.45,.94),' +
-        '              background .22s, border-color .22s, opacity .2s;' +
-        '  will-change:transform,width,height;' +
-        '}' +
-
-        '#bs-cur-dot {' +
-        '  position:fixed; top:0; left:0; pointer-events:none; z-index:2147483647;' +
-        '  width:5px; height:5px; margin-left:-2.5px; margin-top:-2.5px;' +
-        '  background:#E53935; border-radius:50%;' +
-        '  will-change:transform; transition:opacity .15s;' +
-        '}' +
-
-        '#bs-cur-ring.bs-hover {' +
-        '  width:52px; height:52px; margin-left:-26px; margin-top:-26px;' +
-        '  border-color:rgba(229,57,53,0.55); background:rgba(229,57,53,0.07);' +
-        '}' +
-
-        '.bs-lift { transform:translateY(-3px) !important;' +
-        '  transition:transform .22s cubic-bezier(.25,.46,.45,.94) !important; }';
-
-    pd.head.appendChild(style);
-
-    /* ── Create cursor divs on parent <body> (outside React tree) ── */
-    var ring = pd.createElement('div'); ring.id = 'bs-cur-ring';
-    var dot  = pd.createElement('div'); dot.id  = 'bs-cur-dot';
-    pd.body.appendChild(ring);
-    pd.body.appendChild(dot);
-
-    var mx = -200, my = -200, rx = -200, ry = -200;
-
-    /* Dot snaps to mouse instantly via GPU transform */
-    pd.addEventListener('mousemove', function (e) {
-        mx = e.clientX; my = e.clientY;
-        dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
-    }, { passive: true });
-
-    /* Ring follows with smooth lerp at 60 fps */
-    (function loop() {
-        rx += (mx - rx) * 0.20;
-        ry += (my - ry) * 0.20;
-        ring.style.transform = 'translate(' + rx + 'px,' + ry + 'px)';
-        p.requestAnimationFrame(loop);
-    })();
-
-    /* Hover effects */
-    var LIFT_SEL = '.triage-row,.kpi-pill,.metric-summary,.impact-box,.tech-card,.rag-card,.identity-card,.metric-cell';
-    var RING_SEL = 'a,button,[role="button"],.bs-nav-item,.bs-toggle,h1,h2,h3';
-
-    pd.addEventListener('mouseover', function (e) {
-        var lift = e.target.closest(LIFT_SEL);
-        var ro   = !lift && e.target.closest(RING_SEL);
-        if (lift)    { ring.classList.add('bs-hover'); lift.classList.add('bs-lift'); }
-        else if (ro) { ring.classList.add('bs-hover'); }
-    }, { passive: true });
-
-    pd.addEventListener('mouseout', function (e) {
-        ring.classList.remove('bs-hover');
-        var lift = e.target.closest(LIFT_SEL);
-        if (lift) lift.classList.remove('bs-lift');
-    }, { passive: true });
-
-    pd.addEventListener('mouseleave', function () { dot.style.opacity='0'; ring.style.opacity='0'; });
-    pd.addEventListener('mouseenter', function () { dot.style.opacity='1'; ring.style.opacity='1'; });
-
-    /* ── Forward mouse events from ALL child iframes (globe, navbar, chat…) ── */
-    function bridgeIframe(iframe) {
-        try {
-            var idoc = iframe.contentDocument || iframe.contentWindow.document;
-            idoc.addEventListener('mousemove', function (e) {
-                var r = iframe.getBoundingClientRect();
-                mx = r.left + e.clientX;
-                my = r.top  + e.clientY;
-                dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
-            }, { passive: true });
-            idoc.addEventListener('mouseleave', function () {
-                dot.style.opacity='0'; ring.style.opacity='0';
-            });
-            idoc.addEventListener('mouseenter', function () {
-                dot.style.opacity='1'; ring.style.opacity='1';
-            });
-        } catch(e) { /* cross-origin iframe — skip */ }
-    }
-
-    /* Bridge iframes already in DOM */
-    var frames = pd.querySelectorAll('iframe');
-    for (var i = 0; i < frames.length; i++) bridgeIframe(frames[i]);
-
-    /* Bridge iframes added later (Streamlit lazy-renders them) */
-    var obs = new MutationObserver(function (mutations) {
-        mutations.forEach(function (m) {
-            m.addedNodes.forEach(function (n) {
-                if (n.tagName === 'IFRAME') { bridgeIframe(n); }
-                else if (n.querySelectorAll) {
-                    var iframes = n.querySelectorAll('iframe');
-                    for (var j = 0; j < iframes.length; j++) bridgeIframe(iframes[j]);
-                }
-            });
-        });
-    });
-    obs.observe(pd.body, { childList: true, subtree: true });
-})();
-</script>
-""", height=0)
-
 
 # ─── SESSION STATE ─────────────────────────────────────────────────────────────
 for key, default in [
@@ -1236,7 +1107,7 @@ def render_navbar(df):
   var pages = [
     ['command_center',      'Dashboard',   'nav_home'],
     ['crisis_detail',       'Deep Dive',      'nav_cd'],
-    ['allocation_simulator','Optimizer',   'nav_alloc'],
+    ['allocation_simulator','Aid Allocator',   'nav_alloc'],
     ['methodology',         'Support', 'nav_meth'],
   ];
 
@@ -1566,6 +1437,7 @@ def page_command_center(df):
   <span class="lc" style="background:#F0A500"></span>Elevated (40–60)&nbsp;&nbsp;
   <span class="lc" style="background:#0DB37A"></span>Moderate (20–40)&nbsp;&nbsp;
   <span class="lc" style="background:#2D74DA"></span>Low (&lt;20)
+  &nbsp;&nbsp;·&nbsp;&nbsp; scroll to zoom &nbsp;·&nbsp; click marker to zoom in &nbsp;·&nbsp; double-click to reset
 </div>
 <script src="https://cdn.jsdelivr.net/npm/globe.gl@2/dist/globe.gl.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
@@ -1600,9 +1472,15 @@ const world = Globe()(cont)
         '<b style="color:{_globe_tip_text};font-size:13px">' + pt.name + '</b><br>' +
         'Severity &nbsp;<span style="color:' + pt.color + '">' + pt.sev + '/100</span><br>' +
         'Funded &nbsp;&nbsp;<span style="color:{_globe_legend_c}">' + pt.funded + '%</span><br>' +
-        'People &nbsp;&nbsp;<span style="color:{_globe_legend_c}">' + pt.people + '</span>';
+        'People &nbsp;&nbsp;<span style="color:{_globe_legend_c}">' + pt.people + '</span><br>' +
+        '<span style="color:{_globe_legend_c};font-size:10px;">click to zoom in</span>';
     }} else {{
       tip.style.display = 'none';
+    }}
+  }})
+  .onPointClick((pt) => {{
+    if (pt) {{
+      world.pointOfView({{ lat: pt.lat, lng: pt.lng, altitude: 0.8 }}, 800);
     }}
   }});
 
@@ -1650,6 +1528,16 @@ controls.zoomSpeed       = 1.2;
 controls.minDistance     = 150;
 controls.maxDistance     = 700;
 
+// ── Fix: capture wheel events so scroll zoom works inside the iframe ──
+cont.addEventListener('wheel', e => {{
+  e.stopPropagation();
+}}, {{ passive: false }});
+
+// ── Fix: reset view on double-click ──
+cont.addEventListener('dblclick', () => {{
+  world.pointOfView({{ lat: 20, lng: 20, altitude: 2.6 }}, 600);
+}});
+
 let overGlobe = false;
 cont.addEventListener('mouseenter', () => {{ overGlobe = true; }});
 cont.addEventListener('mouseleave', () => {{
@@ -1658,7 +1546,10 @@ cont.addEventListener('mouseleave', () => {{
 }});
 
 let _isDragging = false;
-cont.addEventListener('mousedown', () => {{ _isDragging = true; }});
+cont.addEventListener('mousedown', () => {{
+  _isDragging = true;
+  controls.autoRotate = false;  // stop spinning when user takes control
+}});
 cont.addEventListener('mouseup',   () => {{ _isDragging = false; }});
 
 cont.addEventListener('mousemove', e => {{
@@ -2221,7 +2112,7 @@ def page_allocation_simulator(df):
         st.session_state.opt_budget = budget_m
     with ctrl2:
         st.markdown('<div style="height:26px;"></div>', unsafe_allow_html=True)
-        run_clicked = st.button("▶ RUN OPTIMIZER", key="run_opt_btn", use_container_width=True)
+        run_clicked = st.button("▶ CHECK WHERE TO FUND!", key="run_opt_btn", use_container_width=True)
 
 
     if run_clicked:
@@ -2267,32 +2158,42 @@ def page_allocation_simulator(df):
         df_opt = st.session_state.opt_result.copy()
         df_opt['Country_Name'] = df_opt['iso3'].map(COUNTRY_NAMES).fillna(df_opt['iso3'])
 
-        opt_lives = int(df_opt['Projected_Lives_Saved'].sum())
-        bsf = (df_opt['Crisis_Severity_Score'] / 10) ** 2
-        base_c = (50000 / (bsf + 0.1)).values
-        aps = (df_opt['fatalities'] / max(df_opt['fatalities'].max(), 1)).values
-        cur_lives = int(sum(
-            diminishing_returns_curve(row['funding_received'], base_c[i], aps[i])
-            for i, (_, row) in enumerate(df_opt.iterrows())
-        ))
-        gap_lives = max(0, opt_lives - cur_lives)
-
-        # Impact boxes
-        ib1, ib2, ib3 = st.columns(3, gap="medium")
-        for col, num, lbl, color, bc in [
-            (ib1, cur_lives, "Lives Saved (Current)",      MUTED,  DIM),
-            (ib2, opt_lives, "Lives Saved (Optimized)",      GREEN,  f"{GREEN}40"),
-            (ib3, gap_lives, "Lives Lost to Misallocation",       RED,    f"{RED}40"),
-        ]:
-            with col:
-                st.markdown(f"""
-                <div class="impact-box" style="border-color:{bc};">
-                    <span class="ib-num" style="color:{color};">{num:,}</span>
-                    <span class="ib-label">{lbl}</span>
-                </div>
-                """, unsafe_allow_html=True)
-
-        st.markdown('<div style="height:28px;"></div>', unsafe_allow_html=True)
+        # Comparison table (above charts)
+        st.markdown('<span class="section-label">Allocation Analysis · All active underfunded crises</span>', unsafe_allow_html=True)
+        table = []
+        for _, r in df_opt.sort_values('Crisis_Severity_Score', ascending=False).iterrows():
+            table.append({
+                'Country':           r['Country_Name'],
+                'Severity':          f"{r['Crisis_Severity_Score']:.0f}",
+                'Current Funding':   fmt_b(r['funding_received']),
+                'Optimal Allocation':fmt_b(r['Optimal_Allocation_USD']),
+                'Lives Saved':       f"{int(r['Projected_Lives_Saved']):,}",
+            })
+        _tdf = pd.DataFrame(table)
+        _styled = (
+            _tdf.style
+            .set_properties(**{
+                'color':            'black',
+                'background-color': 'white',
+                'font-family':      'IBM Plex Mono, monospace',
+                'font-size':        '12px',
+            })
+            .set_table_styles([
+                {'selector': 'thead th', 'props': [
+                    ('color', 'black'),
+                    ('background-color', '#f0f0f0'),
+                    ('font-family', 'IBM Plex Mono, monospace'),
+                    ('font-size', '11px'),
+                    ('text-transform', 'uppercase'),
+                    ('letter-spacing', '1px'),
+                ]},
+                {'selector': 'tbody tr:nth-child(even) td', 'props': [
+                    ('background-color', '#f7f7f7'),
+                ]},
+            ])
+        )
+        st.dataframe(_styled, use_container_width=True, hide_index=True)
+        st.markdown(f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:{DIM};margin-top:6px;margin-bottom:32px;text-transform:uppercase;letter-spacing:1.2px;">SLSQP optimizer · diminishing returns + conflict access penalty</div>', unsafe_allow_html=True)
 
         # Sankey
         sk_l, sk_r = st.columns(2, gap="medium")
@@ -2334,45 +2235,6 @@ def page_allocation_simulator(df):
             oa = df_top['Optimal_Allocation_USD'].clip(lower=0).tolist()
             if sum(oa) == 0: oa = [budget_m * 1e6 / len(oa)] * len(oa)
             st.plotly_chart(mk_sankey(oa, "BLINDSPOT Optimized"), use_container_width=True, config=dict(displayModeBar=False))
-
-        # Comparison table
-        st.markdown('<span class="section-label">Reallocation Delta Analysis · All active underfunded crises</span>', unsafe_allow_html=True)
-        table = []
-        for _, r in df_opt.sort_values('Crisis_Severity_Score', ascending=False).iterrows():
-            delta = r['Optimal_Allocation_USD'] - r['funding_received']
-            table.append({
-                'Country':           r['Country_Name'],
-                'Severity':          f"{r['Crisis_Severity_Score']:.0f}",
-                'Current Funding':   fmt_b(r['funding_received']),
-                'Optimal Allocation':fmt_b(r['Optimal_Allocation_USD']),
-                'Delta':             ('+' if delta >= 0 else '') + fmt_b(delta),
-                'Lives Saved':       f"{int(r['Projected_Lives_Saved']):,}",
-            })
-        _tdf = pd.DataFrame(table)
-        _styled = (
-            _tdf.style
-            .set_properties(**{
-                'color':            'black',
-                'background-color': 'white',
-                'font-family':      'IBM Plex Mono, monospace',
-                'font-size':        '12px',
-            })
-            .set_table_styles([
-                {'selector': 'thead th', 'props': [
-                    ('color', 'black'),
-                    ('background-color', '#f0f0f0'),
-                    ('font-family', 'IBM Plex Mono, monospace'),
-                    ('font-size', '11px'),
-                    ('text-transform', 'uppercase'),
-                    ('letter-spacing', '1px'),
-                ]},
-                {'selector': 'tbody tr:nth-child(even) td', 'props': [
-                    ('background-color', '#f7f7f7'),
-                ]},
-            ])
-        )
-        st.dataframe(_styled, use_container_width=True, hide_index=True)
-        st.markdown(f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:{DIM};margin-top:6px;text-transform:uppercase;letter-spacing:1.2px;">SLSQP optimizer · diminishing returns + conflict access penalty</div>', unsafe_allow_html=True)
 
     else:
         st.markdown(f"""
