@@ -2552,7 +2552,7 @@ def render_chat(df):
     <div style="background:{_chat_bg};border-top:1px solid {_chat_border};padding:14px 0 8px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_chat_text};text-transform:uppercase;letter-spacing:2px;">◎ BLINDSPOT AI Agent</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:{_chat_dim};text-transform:uppercase;letter-spacing:1.5px;">Gemini 2.5 Flash · Domain-restricted</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:{_chat_dim};text-transform:uppercase;letter-spacing:1.5px;">Gemini 2.5 Flash · Native Chat API · Multi-turn</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -2591,9 +2591,11 @@ def render_chat(df):
         else:
             try:
                 from google import genai
+                from google.genai import types as gtypes
+
                 client = genai.Client(api_key=api_key)
 
-                # Build live data context
+                # ── Build live data context ──────────────────────────────────
                 total_crises  = len(df)
                 red_zones     = int((df['Crisis_Severity_Score'] > 75).sum()) if not df.empty else 0
                 total_gap_bn  = round(df['funding_gap'].sum() / 1e9, 1) if 'funding_gap' in df.columns and not df.empty else 0
@@ -2650,17 +2652,34 @@ All tracked countries: {all_countries}
 4. Be precise, factual, and concise. No emojis. Use numbers when you have them.
 5. Keep answers under 200 words unless a detailed explanation is clearly needed."""
 
-                # Build conversation history for multi-turn
-                history_text = ""
-                for m in st.session_state.messages[-8:]:  # last 8 turns
-                    role = "User" if m['role'] == 'user' else "Assistant"
-                    history_text += f"{role}: {m['content']}\n"
+                # ── Build native Gemini history from session messages ────────
+                # Skip index 0 (welcome msg) and the last msg (current user prompt)
+                history_gemini = []
+                for m in st.session_state.messages[1:-1]:
+                    role = "user" if m['role'] == 'user' else "model"
+                    history_gemini.append(
+                        gtypes.Content(role=role, parts=[gtypes.Part(text=m['content'])])
+                    )
 
-                resp = client.models.generate_content(
+                # ── Create native Gemini chat session ────────────────────────
+                chat_session = client.chats.create(
                     model="gemini-2.5-flash",
-                    contents=f"{sys_p}\n\nConversation so far:\n{history_text}\nUser: {prompt}"
+                    config=gtypes.GenerateContentConfig(
+                        system_instruction=sys_p,
+                        temperature=0.4,
+                        max_output_tokens=600,
+                    ),
+                    history=history_gemini,
                 )
-                st.session_state.messages.append({"role": "assistant", "content": resp.text})
+
+                # ── Stream response, collect chunks ──────────────────────────
+                full_response = ""
+                with st.spinner("BLINDSPOT AI thinking..."):
+                    for chunk in chat_session.send_message_stream(prompt):
+                        if chunk.text:
+                            full_response += chunk.text
+
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
                 st.rerun()
             except Exception as e:
                 err = str(e)
