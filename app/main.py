@@ -17,7 +17,7 @@ if parent_dir not in sys.path:
 try:
     from models.allocation_optimizer import run_allocation_optimizer
     from app.genai_briefs import generate_safety_brief_prompts
-    from vector_rag.actian_search import ActianVectorDB
+    from vector_rag.actian_search import get_donor_brief, get_journalist_brief, get_un_brief
 except Exception as e:
     st.error(f"Module import error: {e}")
 

@@ -55,8 +55,20 @@ A sovereign wealth fund UX. Enter a deployment budget (e.g., $200M), click the b
 ### Gemini AI Intelligence Assistant
 A domain-restricted conversational AI powered by the Gemini 2.5 API. The assistant is grounded in live crisis context from the Databricks cluster and is authorized only to answer quantitative questions about funding, geopolitical risk, and capital allocation strategy. Jargon-free. Professional. No hallucinations outside domain scope.
 
-### Actian Vector RAG
-A vector database layer using Actian for semantic document search. Enables natural language querying over UN humanitarian briefs, funding reports, and crisis assessments with retrieval-augmented generation.
+### Actian Vector RAG — 3-Persona Crisis Intelligence
+A vector database layer powered by Actian VectorAI DB (Dockerized) with TF-IDF embeddings across 2,388 unique historical UN humanitarian documents from three authoritative sources:
+
+- **HRP**: UN Humanitarian Response Plans (910 plans)
+- **ReliefWeb**: Crisis figures by country and year (18,041 rows)
+- **FTS**: UN OCHA Financial Tracking Service funding data (3,669 rows)
+
+When a crisis is selected, the system queries Actian VectorAI via cosine similarity search and returns the most comparable historical crises. These results power three persona-specific intelligence briefs:
+
+- **💰 Donor Brief** — Emotional hook + ROI analysis + historical proof that funding stabilizes crises. Motivates donors to act now with data-backed urgency.
+- **📰 Journalist Brief** — The untold story angle + verified UN data points ready for publication. Shows which crises are severely undercovered relative to their severity score.
+- **🔵 UN Coordinator Brief** — Operational intelligence including priority clusters, funding gap analysis, and comparable past response strategies that worked.
+
+All briefs are generated in real time from 2,388 embedded UN documents. No hallucinations. Every comparable crisis is a real historical record from UN OCHA data.
 
 ---
 
@@ -81,7 +93,7 @@ A vector database layer using Actian for semantic document search. Enables natur
 | Live Dashboard | Streamlit |
 | Data Visualization | Plotly Express / Graph Objects |
 | AI Assistant | Google Gemini 2.5 Flash |
-| Vector Search | Actian Vector Database |
+| Vector Search | Actian VectorAI DB (Docker) + TF-IDF embeddings |
 | Optimizer Model | SciPy SLSQP (Allocation) |
 | Environment | Python 3.10+, dotenv |
 
@@ -133,6 +145,19 @@ streamlit run app/main.py
 
 The dashboard will connect to your Databricks cluster automatically. If the cluster is unavailable, the application falls back gracefully to local CSV data in `assets/`.
 
+### Running the VectorAI RAG Pipeline
+```bash
+# Step 1: Start Actian VectorAI DB (Mac M-chip — requires Rosetta 2)
+docker run --platform linux/amd64 -p 50051:50051 williamimoh/actian-vectorai-db:1.0b
+
+# Step 2: Populate VectorAI with UN historical documents (run once)
+cd vector_rag
+python triage_rag_2.py
+
+# Step 3: Start the dashboard — RAG layer is now active
+streamlit run app/main.py
+```
+
 ### Running the Databricks Scoring Pipeline
 
 ```python
@@ -161,6 +186,8 @@ triage-hacklytics/
 │   └── allocation_optimizer.py    # SLSQP capital allocation model
 ├── vector_rag/
 │   └── actian_search.py           # Actian vector DB search layer
+│   ├── triage_rag_2.py            # One-time ingestion script (populates VectorAI)
+│   └── triage_vectorizer.pkl      # Saved TF-IDF vectorizer (generated at runtime)
 └── .env                           # API credentials (not committed)
 ```
 
