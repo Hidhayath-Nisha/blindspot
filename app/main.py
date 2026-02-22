@@ -558,6 +558,27 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Syne', sans-serif !important; color: var(
 
 hr { border-color: var(--border) !important; margin: 8px 0 !important; }
 iframe { border: none !important; }
+
+/* ── CHAT OVERLAY (GLOBAL) ── */
+div[data-testid="stVerticalBlock"]:has(.chat-overlay-marker) {
+    position: fixed !important;
+    bottom: 90px !important;
+    right: 28px !important;
+    width: 380px !important;
+    max-height: 600px !important;
+    background: var(--bg2) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    z-index: 9999 !important;
+    box-shadow: 0 15px 45px rgba(0,0,0,0.6) !important;
+    padding: 16px !important;
+    display: flex;
+    flex-direction: column;
+}
+.chat-overlay-marker {
+    padding: 0 !important;
+    overflow: hidden !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -801,6 +822,13 @@ h1,h2,h3,h4,h5,h6 { color: #0A1628 !important; }
 
 /* ── DIVIDERS ── */
 hr { border-color: rgba(0,0,0,0.08) !important; }
+
+/* ── CHAT OVERLAY OVERRIDES (LIGHT) ── */
+div[data-testid="stVerticalBlock"]:has(.chat-overlay-marker) {
+    background: #FFFFFF !important;
+    border: 1px solid rgba(0,0,0,0.08) !important;
+    box-shadow: 0 15px 45px rgba(0,0,0,0.15) !important;
+}
 
 /* ── KNOWN DARK INLINE BACKGROUNDS (brief output, empty states, etc.) ── */
 /* Override dark navy rgba(22,31,51,...) backgrounds used via Python constants */
@@ -2664,76 +2692,5 @@ var s=P.getElementById('bs-hero-style');if(s)s.remove();
     if   page == 'crisis_detail':         page_crisis_detail(df_crises)
     elif page == 'allocation_simulator':  page_allocation_simulator(df_crises)
     elif page == 'methodology':           page_methodology()
-
-# ── Floating Chat Action Button ──
-_chat_open_js = 'true' if st.session_state.chat_open else 'false'
-_is_light_fab = st.session_state.get('theme', 'dark') == 'light'
-_fab_color     = "#C8372D" if _is_light_fab else "rgba(229,57,53,0.9)"
-_fab_hover     = "#A02820" if _is_light_fab else "rgba(229,57,53,1.0)"
-_fab_shadow    = "rgba(200,55,45,0.30)" if _is_light_fab else "rgba(229,57,53,0.35)"
-
-components.html(f"""
-<script>
-(function() {{
-    var P = window.parent.document;
-    var FAB_BG    = '{_fab_color}';
-    var FAB_HOVER = '{_fab_hover}';
-    var FAB_SHADE = '{_fab_shadow}';
-    // Hide original nav_chat button (FAB replaces it visually)
-    var allBtns = P.querySelectorAll('button');
-    for (var i = 0; i < allBtns.length; i++) {{
-        var t = (allBtns[i].innerText || allBtns[i].textContent || '').trim();
-        if (t === '◎ AI Agent' || t === '✕ Close Chat') {{
-            var wrapper = allBtns[i].closest('[data-testid="stButton"]');
-            if (wrapper) wrapper.style.cssText = 'position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;overflow:hidden!important;';
-            break;
-        }}
-    }}
-    // Create or update FAB
-    var fab = P.getElementById('bs-chat-fab');
-    var isOpen = {_chat_open_js};
-    if (!fab) {{
-        fab = P.createElement('div');
-        fab.id = 'bs-chat-fab';
-        fab.style.cssText = [
-            'position:fixed;bottom:28px;right:28px;',
-            'width:52px;height:52px;border-radius:50%;',
-            'background:' + FAB_BG + ';',
-            'backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);',
-            'border:1px solid rgba(255,255,255,0.15);',
-            'display:flex;align-items:center;justify-content:center;',
-            'cursor:pointer;z-index:9999;',
-            'box-shadow:0 8px 32px ' + FAB_SHADE + ';',
-            'transition:background 0.15s,transform 0.15s,box-shadow 0.15s;',
-        ].join('');
-        fab.addEventListener('mouseenter', function() {{
-            this.style.background = FAB_HOVER;
-            this.style.transform  = 'scale(1.06)';
-        }});
-        fab.addEventListener('mouseleave', function() {{
-            this.style.background = FAB_BG;
-            this.style.transform  = 'scale(1)';
-        }});
-        fab.addEventListener('click', function() {{
-            var btns2 = P.querySelectorAll('button');
-            for (var j = 0; j < btns2.length; j++) {{
-                var t2 = (btns2[j].innerText || btns2[j].textContent || '').trim();
-                if (t2 === '◎ AI Agent' || t2 === '✕ Close Chat') {{
-                    btns2[j].click(); return;
-                }}
-            }}
-        }});
-        P.body.appendChild(fab);
-    }} else {{
-        fab.style.background  = FAB_BG;
-        fab.style.boxShadow   = '0 8px 32px ' + FAB_SHADE;
-    }}
-    // Update icon based on chat state
-    fab.innerHTML = isOpen
-        ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>'
-        : '<svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>';
-}})();
-</script>
-""", height=0, scrolling=False)
 
 render_chat(df_crises)
