@@ -98,43 +98,44 @@ REGION_MAP = {
 }
 
 # Design tokens
-BG     = "#05080F"
-CARD   = "#090D18"
-BORDER = "#161F33"
-RED    = "#E83D3D"
-AMBER  = "#F0A500"
-GREEN  = "#0DB37A"
-BLUE   = "#2D74DA"
-MUTED  = "#64748B"
-TEXT   = "#CBD5E1"
-DIM    = "#334155"
+BG     = "#08080C"
+CARD   = "#0D0D14"
+BORDER = "rgba(255,255,255,0.07)"
+RED    = "#E53935"
+AMBER  = "#F59E0B"
+GREEN  = "#10B981"
+BLUE   = "#3B82F6"
+MUTED  = "#6B7280"
+TEXT   = "rgba(255,255,255,0.85)"
+DIM    = "rgba(255,255,255,0.2)"
 
 # ─── CSS ──────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Syne:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 /* ── THEME TOKENS — dark defaults ── */
 :root {
-  --bg:      #05080F;
-  --bg2:     #090D18;
-  --bg3:     #0D1220;
-  --border:  #161F33;
-  --border2: #1E2D47;
-  --text:    #CBD5E1;
-  --text-h:  #F1F5F9;
-  --mid:     #94A3B8;
-  --dim:     #334155;
-  --red:     #E83D3D;
-  --amber:   #F0A500;
-  --green:   #0DB37A;
-  --blue:    #2D74DA;
-  --nav-bg:  #090D18;
-  --nav-b:   #161F33;
-  --card-shadow: 0 1px 8px rgba(0,0,0,0.5), 0 4px 20px rgba(0,0,0,0.3);
-  --glass-bg:   rgba(9,13,24,0.65);
-  --glass-blur: blur(18px) saturate(1.2);
-  --glass-bdr:  rgba(255,255,255,0.07);
+  --gutter: 48px;
+  --bg:      #08080C;
+  --bg2:     #0D0D14;
+  --bg3:     #111118;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text:    rgba(255,255,255,0.85);
+  --text-h:  #FFFFFF;
+  --mid:     rgba(255,255,255,0.5);
+  --dim:     rgba(255,255,255,0.25);
+  --red:     #E53935;
+  --amber:   #F59E0B;
+  --green:   #10B981;
+  --blue:    #3B82F6;
+  --nav-bg:  rgba(8,8,12,0.85);
+  --nav-b:   rgba(255,255,255,0.08);
+  --card-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  --glass-bg:   rgba(255,255,255,0.03);
+  --glass-blur: blur(12px) saturate(150%);
+  --glass-bdr:  rgba(255,255,255,0.08);
   --hero-bg:    transparent;
 }
 
@@ -146,10 +147,56 @@ st.markdown("""
     visibility: hidden !important;
     display: none !important;
 }
-.block-container { padding: 0 !important; max-width: 100% !important; }
+/* ── LAYOUT CONTAINER SYSTEM ── */
+:root {
+  --container-max: 1280px;
+  --container-pad: clamp(16px, 4vw, 48px);
+}
+/* Block-container IS the layout root — constrain it once here */
+.block-container {
+    max-width: calc(var(--container-max) + 2 * var(--container-pad)) !important;
+    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left:  var(--container-pad) !important;
+    padding-right: var(--container-pad) !important;
+    padding-top:    0 !important;
+    padding-bottom: 0 !important;
+    box-sizing: border-box !important;
+}
 section[data-testid="stMain"] > div { padding: 0 !important; }
-.stApp { background: var(--bg) !important; }
+.stApp { background: #08080C !important; }
 .element-container { margin-bottom: 0 !important; }
+
+/* ── FULL-BLEED ESCAPE (edge-to-edge bg while keeping content aligned) ── */
+.bs-full-bleed {
+    margin-left:  calc(-1 * var(--container-pad));
+    margin-right: calc(-1 * var(--container-pad));
+    padding-left:  var(--container-pad);
+    padding-right: var(--container-pad);
+}
+
+/* ── 12-COLUMN GRID ── */
+.bs-grid-12 {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 20px;
+}
+.bs-col-12 { grid-column: span 12; }
+.bs-col-8  { grid-column: span 8;  }
+.bs-col-7  { grid-column: span 7;  }
+.bs-col-5  { grid-column: span 5;  }
+.bs-col-4  { grid-column: span 4;  }
+.bs-col-3  { grid-column: span 3;  }
+
+@media (max-width: 1024px) {
+  .bs-col-8, .bs-col-7 { grid-column: span 12; }
+  .bs-col-5            { grid-column: span 12; }
+  .bs-col-4            { grid-column: span 6;  }
+}
+@media (max-width: 640px) {
+  .bs-col-4, .bs-col-3 { grid-column: span 12; }
+}
 
 /* ── FONTS BASE ── */
 body, p, span, div, label, li {
@@ -173,81 +220,93 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Syne', sans-serif !important; color: var(
     border: 1px solid var(--glass-bdr) !important;
     box-shadow: var(--card-shadow) !important;
 }
+.glass-card {
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
 
-/* ── FLOATING PILL NAVBAR ── */
+/* ── FLOATING PILL NAVBAR — constrained to container width ── */
 #bs-pill-nav {
     position: fixed;
-    top: 16px;
+    top: 14px;
     left: 50%;
     transform: translateX(-50%);
+    /* Pill spans same logical width as the content container */
+    width: calc(100% - 2 * var(--container-pad));
+    max-width: var(--container-max);
     display: flex;
     align-items: center;
-    gap: 2px;
-    padding: 6px 8px;
+    gap: 0;
+    padding: 5px 6px;
     border-radius: 100px;
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-bdr);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08);
+    background: rgba(8,8,12,0.85);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
     z-index: 9000;
     white-space: nowrap;
+    box-sizing: border-box;
 }
 #bs-pill-nav .bs-logo {
     font-family: 'Syne', sans-serif;
     font-size: 15px; font-weight: 800;
-    color: var(--text-h);
-    letter-spacing: 2px; text-transform: uppercase;
-    padding: 0 14px 0 10px;
+    color: #FFFFFF;
+    letter-spacing: 3px; text-transform: uppercase;
+    padding: 0 16px 0 10px;
     user-select: none;
 }
-#bs-pill-nav .bs-logo span {
-    color: var(--red);
-}
+#bs-pill-nav .bs-logo em { color: #E53935; font-style: normal; }
 #bs-pill-nav .bs-sep {
-    width: 1px; height: 20px;
-    background: var(--border);
-    margin: 0 6px;
+    width: 1px; height: 18px;
+    background: rgba(255,255,255,0.10);
+    margin: 0 4px;
     flex-shrink: 0;
 }
 #bs-pill-nav .bs-nav-item {
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px; font-weight: 500;
-    text-transform: uppercase; letter-spacing: 1.5px;
-    color: var(--mid);
-    padding: 7px 16px;
+    font-size: 11px; font-weight: 400;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: rgba(255,255,255,0.5);
+    padding: 7px 14px;
     border-radius: 100px;
     cursor: pointer;
     border: none; background: transparent;
-    transition: color 0.15s, background 0.15s;
+    transition: color 0.15s;
     text-decoration: none;
     display: inline-block;
 }
-#bs-pill-nav .bs-nav-item:hover {
-    color: var(--text-h);
-    background: rgba(127,127,127,0.08);
-}
-#bs-pill-nav .bs-nav-item.active {
-    color: var(--text-h);
-    background: rgba(127,127,127,0.12);
-    font-weight: 600;
-}
+#bs-pill-nav .bs-nav-item:hover { color: #FFFFFF; background: transparent; }
+#bs-pill-nav .bs-nav-item.active { color: #E53935; background: transparent; font-weight: 500; }
 #bs-pill-nav .bs-toggle {
-    width: 34px; height: 34px;
+    width: 32px; height: 32px;
     border-radius: 50%;
     border: none; background: transparent;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 16px; color: var(--mid);
-    transition: background 0.15s, color 0.15s;
+    font-size: 15px; color: rgba(255,255,255,0.4);
+    transition: color 0.15s;
     flex-shrink: 0;
 }
-#bs-pill-nav .bs-toggle:hover {
-    background: rgba(127,127,127,0.1);
-    color: var(--text-h);
+#bs-pill-nav .bs-toggle:hover { color: #FFFFFF; background: transparent; }
+#bs-pill-nav .bs-live-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: #10B981;
+    background: rgba(16,185,129,0.12);
+    border: 1px solid rgba(16,185,129,0.25);
+    border-radius: 100px;
+    padding: 4px 10px;
+    margin: 0 6px;
+    flex-shrink: 0;
 }
-/* push page content down so it clears the fixed pill */
-.stApp > section { padding-top: 80px; }
+/* push page content below the fixed pill */
+.stApp > section { padding-top: 72px; }
+/* Inner Streamlit wrapper — let block-container padding do the work */
+.block-container > div { padding-left: 0 !important; padding-right: 0 !important; }
 /* hide the native Streamlit nav button row */
 .bs-hidden-nav { display:none !important; }
 /* hide routing button row via adjacent-sibling to the marker */
@@ -261,18 +320,19 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Syne', sans-serif !important; color: var(
 /* ── NAV BUTTONS ── */
 .stButton > button {
     font-family: 'IBM Plex Mono', monospace !important;
-    font-size: 12px !important; font-weight: 500 !important;
+    font-size: 11px !important; font-weight: 500 !important;
     text-transform: uppercase !important; letter-spacing: 2px !important;
     white-space: nowrap !important;
-    background: transparent !important; color: var(--mid) !important;
+    background: rgba(229,57,53,0.85) !important; color: #FFFFFF !important;
     border: none !important; border-radius: 0 !important;
-    padding: 6px 10px !important; height: 38px !important;
-    transition: color 0.15s !important; box-shadow: none !important;
+    padding: 10px 22px !important; height: auto !important;
+    transition: background 0.15s, box-shadow 0.15s !important;
+    box-shadow: 0 4px 16px rgba(229,57,53,0.25) !important;
 }
 .stButton > button:hover {
-    color: var(--text-h) !important;
-    background: rgba(127,127,127,0.06) !important;
-    transform: none !important; box-shadow: none !important;
+    background: rgba(229,57,53,1.0) !important; color: #FFFFFF !important;
+    box-shadow: 0 6px 24px rgba(229,57,53,0.4) !important;
+    transform: none !important;
 }
 
 /* ── SECTION LABELS ── */
@@ -289,68 +349,119 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Syne', sans-serif !important; color: var(
 
 /* ── HERO ── */
 .hero-section {
-    padding: 8px 36px 28px;
+    padding: 60px 48px 48px;
     background: var(--hero-bg, transparent);
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.hero-eyebrow {
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 10px !important; font-weight: 400 !important;
+    letter-spacing: 4px !important; text-transform: uppercase !important;
+    color: #E53935 !important; margin-bottom: 24px !important; display: block;
 }
 .hero-number {
     font-family: 'Syne', sans-serif !important;
-    font-size: clamp(52px, 7vw, 90px) !important;
-    font-weight: 800 !important; line-height: 0.9 !important;
-    letter-spacing: -2px !important;
+    font-size: clamp(64px, 8vw, 100px) !important;
+    font-weight: 800 !important; line-height: 0.92 !important;
+    letter-spacing: -4px !important;
+    margin-bottom: 10px !important;
 }
-.hero-number .red   { color: var(--red) !important; }
-.hero-number .white { color: var(--text-h) !important; }
-.hero-sub {
+.hero-number .red   { color: #E53935 !important; font-weight: 800 !important; }
+.hero-number .white { color: #FFFFFF !important; font-weight: 300 !important; }
+.hero-subtitle {
+    font-family: 'Syne', sans-serif !important;
+    font-size: clamp(24px, 3vw, 44px) !important;
+    font-weight: 300 !important; line-height: 1.15 !important;
+    color: rgba(255,255,255,0.45) !important;
+}
+.hero-description {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 16px !important; font-weight: 400 !important;
+    color: rgba(255,255,255,0.55) !important;
+    line-height: 1.75 !important; max-width: 620px !important;
+    margin-top: 28px !important; display: block;
+}
+.hero-source {
     font-family: 'IBM Plex Mono', monospace !important;
-    font-size: 13px !important; color: var(--mid) !important;
-    margin-top: 16px !important; line-height: 1.5;
+    font-size: 11px !important; color: rgba(255,255,255,0.2) !important;
+    margin-top: 28px !important; display: block; letter-spacing: 1px;
 }
 
 /* ── KPI PILLS ── */
-.kpi-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 20px 0 0; }
-.kpi-pill {
-    background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
-    padding: 24px 26px; flex: 1; min-width: 130px; text-align: center;
-    box-shadow: var(--card-shadow);
-    transition: box-shadow 0.15s, transform 0.15s;
+.kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    margin: 0;
 }
+.kpi-pill {
+    background: rgba(255,255,255,0.025);
+    border-right: 1px solid rgba(255,255,255,0.07);
+    padding: 28px 32px;
+    text-align: left;
+    transition: background 0.15s;
+    position: relative;
+}
+.kpi-pill:last-child { border-right: none; }
 .kpi-pill:hover {
-    box-shadow: 0 4px 20px rgba(45,116,218,0.12);
-    transform: translateY(-1px);
+    background: rgba(255,255,255,0.045);
 }
 .kpi-label {
     font-family: 'IBM Plex Mono', monospace !important;
-    font-size: 12px !important; color: var(--dim) !important;
-    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; display: block;
+    font-size: 10px !important; color: rgba(255,255,255,0.3) !important;
+    text-transform: uppercase; letter-spacing: 3px; margin-bottom: 12px; display: block;
 }
 .kpi-value {
     font-family: 'Syne', sans-serif !important;
-    font-size: 36px !important; font-weight: 700 !important;
-    color: var(--text-h) !important; line-height: 1.1;
+    font-size: 42px !important; font-weight: 700 !important;
+    color: #FFFFFF !important; line-height: 1.0; display: block;
+    margin-bottom: 8px;
+}
+.kpi-desc {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 13px !important; color: rgba(255,255,255,0.3) !important;
+    display: block; line-height: 1.4;
 }
 
 /* ── TRIAGE QUEUE ── */
 .triage-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 14px 10px; min-height: 60px; border-radius: 6px; cursor: pointer;
-    border: 1px solid transparent; transition: background 0.12s, border-color 0.12s;
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 16px; height: 54px;
+    border-bottom: 1px solid rgba(255,255,255,0.045);
+    cursor: pointer; transition: background 0.12s;
 }
-.triage-row:hover { background: rgba(45,116,218,0.06); border-color: var(--border); }
-.triage-rank    { font-family: 'IBM Plex Mono', monospace !important; font-size: 12px !important; color: var(--dim) !important; width: 22px; text-align: right; flex-shrink: 0; }
+.triage-row:hover { background: rgba(255,255,255,0.05); }
+.triage-rank    { font-family: 'IBM Plex Mono', monospace !important; font-size: 11px !important; color: rgba(255,255,255,0.2) !important; width: 20px; text-align: right; flex-shrink: 0; }
 .triage-dot     { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.triage-country { font-family: 'Syne', sans-serif !important; font-size: 15px !important; font-weight: 600 !important; color: var(--text-h) !important; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.triage-score   { font-family: 'IBM Plex Mono', monospace !important; font-size: 20px !important; font-weight: 700 !important; }
-.triage-pct     { font-family: 'IBM Plex Mono', monospace !important; font-size: 13px !important; color: var(--mid) !important; width: 40px; text-align: right; flex-shrink: 0; }
-.triage-trend   { font-size: 16px; width: 18px; text-align: center; flex-shrink: 0; }
+.triage-country { font-family: 'DM Sans', sans-serif !important; font-size: 14px !important; font-weight: 500 !important; color: #FFFFFF !important; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.triage-score   { font-family: 'IBM Plex Mono', monospace !important; font-size: 17px !important; font-weight: 700 !important; min-width: 32px; text-align: right; flex-shrink: 0; }
+.triage-pct     { font-family: 'IBM Plex Mono', monospace !important; font-size: 12px !important; color: rgba(255,255,255,0.45) !important; width: 42px; text-align: right; flex-shrink: 0; }
+.triage-trend   { font-size: 14px; width: 16px; text-align: center; flex-shrink: 0; }
 
 /* ── METRIC SUMMARY CARDS ── */
 .metric-summary {
-    background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
-    padding: 16px 18px; text-align: center; height: 100%;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 6px;
+    padding: 20px 18px; text-align: center;
     box-shadow: var(--card-shadow);
 }
-.metric-summary .val { font-family: 'Syne', sans-serif !important; font-size: 32px !important; font-weight: 700 !important; color: var(--text-h) !important; display: block; margin-bottom: 6px; }
-.metric-summary .lbl { font-family: 'IBM Plex Mono', monospace !important; font-size: 11px !important; color: var(--dim) !important; text-transform: uppercase; letter-spacing: 2px; }
+.metric-summary .val {
+    font-family: 'Syne', sans-serif !important;
+    font-size: 28px !important; font-weight: 700 !important;
+    color: var(--text-h) !important; display: block;
+    margin-bottom: 8px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+    line-height: 1.2;
+}
+.metric-summary .lbl {
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 10px !important; color: rgba(255,255,255,0.3) !important;
+    text-transform: uppercase; letter-spacing: 2.5px; line-height: 1.4;
+}
 
 /* ── IDENTITY CARD ── */
 .identity-card {
@@ -420,6 +531,7 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Syne', sans-serif !important; color: var(
 [data-testid="stDataFrame"] { border: 1px solid var(--border) !important; border-radius: 8px !important; }
 [data-testid="stExpander"] { background: var(--bg2) !important; border: 1px solid var(--border) !important; border-radius: 8px !important; }
 [data-testid="stExpander"] summary { font-family: 'IBM Plex Mono', monospace !important; font-size: 13px !important; color: var(--text) !important; text-transform: uppercase; letter-spacing: 1.2px; }
+[data-testid="stMarkdownContainer"] { overflow: visible !important; }
 [data-testid="stVerticalBlockBorderWrapper"] { background: var(--bg2) !important; border: 1px solid var(--border) !important; border-radius: 8px !important; }
 [data-testid="stSpinner"] > div { color: var(--mid) !important; font-family: 'IBM Plex Mono', monospace !important; font-size: 13px !important; }
 
@@ -455,37 +567,250 @@ def inject_theme_css():
     if st.session_state.get('theme', 'dark') == 'light':
         st.markdown("""
 <style>
+/* ── LIGHT MODE: :root token overrides ── */
 :root {
-  --bg:      #F4F7FA;
+  --bg:      #F0F4F8;
   --bg2:     #FFFFFF;
-  --bg3:     #EEF2F7;
-  --border:  #DDE3EC;
-  --border2: #C8D0DC;
-  --text:    #1A1A1A;
+  --bg3:     #E8EEF6;
+  --border:  rgba(0,0,0,0.09);
+  --border2: rgba(0,0,0,0.13);
+  --text:    #1E293B;
   --text-h:  #0A1628;
-  --mid:     #4A5568;
-  --dim:     #718096;
+  --mid:     #475569;
+  --dim:     #64748B;
   --red:     #C8372D;
-  --amber:   #B07A00;
+  --amber:   #A16207;
   --green:   #0A7A56;
-  --blue:    #009EDB;
-  --nav-bg:  #FFFFFF;
-  --nav-b:   #DDE3EC;
-  --card-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+  --blue:    #0077B6;
+  --nav-bg:  rgba(255,255,255,0.88);
+  --nav-b:   rgba(0,0,0,0.08);
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.06);
   --glass-bg:   rgba(255,255,255,0.72);
-  --glass-blur: blur(18px) saturate(1.6);
-  --glass-bdr:  rgba(255,255,255,0.9);
-  --hero-bg:    #FFFFFF;
+  --glass-blur: blur(20px) saturate(1.8);
+  --glass-bdr:  rgba(255,255,255,0.90);
+  --hero-bg:    transparent;
 }
-/* Light-mode live badge — swap to institutional look */
-.bs-live-badge {
-    background: rgba(10,122,86,0.1) !important;
-    border-color: rgba(10,122,86,0.3) !important;
+
+/* ── APP SHELL ── */
+.stApp { background: linear-gradient(135deg, #EFF6FF 0%, #F0F4F8 50%, #EEF2F7 100%) !important; }
+
+/* ── TYPOGRAPHY ── */
+body, p, span, div, label, li { color: #1E293B !important; }
+h1,h2,h3,h4,h5,h6 { color: #0A1628 !important; }
+
+/* ── FLOATING PILL NAVBAR ── */
+#bs-pill-nav {
+    background: rgba(255,255,255,0.88) !important;
+    border-color: rgba(0,0,0,0.09) !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.95) !important;
+    backdrop-filter: blur(24px) saturate(1.8) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(1.8) !important;
 }
-/* Light-mode triage hover */
-.triage-row:hover { background: rgba(0,158,219,0.06) !important; }
-/* Light-mode kpi pill hover */
-.kpi-pill:hover { box-shadow: 0 4px 20px rgba(0,158,219,0.14) !important; }
+#bs-pill-nav .bs-logo { color: #0A1628 !important; }
+#bs-pill-nav .bs-logo em { color: #C8372D !important; }
+#bs-pill-nav .bs-sep { background: rgba(0,0,0,0.10) !important; }
+#bs-pill-nav .bs-nav-item { color: rgba(10,22,40,0.45) !important; }
+#bs-pill-nav .bs-nav-item:hover { color: #0A1628 !important; }
+#bs-pill-nav .bs-nav-item.active { color: #C8372D !important; }
+#bs-pill-nav .bs-toggle { color: rgba(10,22,40,0.40) !important; }
+#bs-pill-nav .bs-toggle:hover { color: #0A1628 !important; }
+#bs-pill-nav .bs-live-badge {
+    color: #0A7A56 !important;
+    background: rgba(10,122,86,0.10) !important;
+    border-color: rgba(10,122,86,0.25) !important;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar-track { background: #E8EEF6 !important; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.14) !important; }
+
+/* ── SECTION LABELS ── */
+.section-label { color: rgba(10,22,40,0.40) !important; }
+.section-title { color: #0A1628 !important; }
+
+/* ── TRIAGE QUEUE ── */
+.triage-row { border-bottom-color: rgba(0,0,0,0.06) !important; }
+.triage-row:hover { background: rgba(0,119,182,0.06) !important; }
+.triage-rank    { color: rgba(10,22,40,0.28) !important; }
+.triage-country { color: #0A1628 !important; }
+.triage-pct     { color: rgba(10,22,40,0.50) !important; }
+
+/* ── KPI PILLS ── */
+.kpi-label { color: rgba(10,22,40,0.42) !important; }
+.kpi-value { color: #0A1628 !important; }
+.kpi-desc  { color: rgba(10,22,40,0.42) !important; }
+.kpi-pill:hover {
+    background: rgba(255,255,255,0.65) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.10) !important;
+}
+
+/* ── METRIC SUMMARY CARDS (bottom strip) ── */
+.metric-summary {
+    background: rgba(255,255,255,0.75) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+    backdrop-filter: blur(16px) saturate(1.6) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.6) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07) !important;
+}
+.metric-summary .lbl { color: rgba(10,22,40,0.46) !important; }
+.metric-summary .val { color: #0A1628 !important; }
+
+/* ── IDENTITY / METRIC CARDS ── */
+.identity-card {
+    background: rgba(255,255,255,0.82) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+    backdrop-filter: blur(16px) saturate(1.6) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.6) !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08) !important;
+}
+.identity-country { color: #0A1628 !important; }
+.identity-iso     { color: #475569 !important; }
+.identity-score-label { color: #475569 !important; }
+.metric-cell {
+    background: rgba(0,0,0,0.04) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+}
+.metric-cell .mc-val { color: #0A1628 !important; }
+.metric-cell .mc-lbl { color: #475569 !important; }
+
+/* ── RAG / BRIEF PANELS ── */
+.rag-card {
+    background: rgba(255,255,255,0.78) !important;
+    border-color: rgba(0,0,0,0.09) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06) !important;
+}
+.rag-card-title { color: #0A1628 !important; }
+.rag-worked     { color: #475569 !important; }
+.powered-by     { color: rgba(10,22,40,0.35) !important; }
+
+/* ── IMPACT BOXES ── */
+.impact-box {
+    background: rgba(255,255,255,0.80) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+}
+.impact-box .ib-label { color: #475569 !important; }
+
+/* ── FORMULA / TECH / SOURCE BLOCKS ── */
+.formula-block {
+    background: rgba(0,0,0,0.04) !important;
+    border-color: rgba(0,0,0,0.10) !important;
+}
+.tech-card {
+    background: rgba(255,255,255,0.80) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+    backdrop-filter: blur(12px) !important;
+}
+.tc-name { color: #0A1628 !important; }
+.tc-desc { color: #475569 !important; }
+.source-badge {
+    background: rgba(0,0,0,0.04) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+    color: #1E293B !important;
+}
+.disclaimer-box {
+    background: rgba(0,0,0,0.04) !important;
+    border-color: rgba(200,55,45,0.25) !important;
+}
+
+/* ── GLASS UTILITY ── */
+.glass, .glass-card {
+    background: rgba(255,255,255,0.70) !important;
+    border-color: rgba(255,255,255,0.90) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+}
+
+/* ── STREAMLIT COMPONENT OVERRIDES ── */
+[data-testid="stMetric"] {
+    background: rgba(255,255,255,0.80) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06) !important;
+}
+[data-testid="stMetricLabel"] { color: #475569 !important; }
+[data-testid="stMetricValue"] { color: #0A1628 !important; }
+
+[data-testid="stSelectbox"] > div > div {
+    background: rgba(255,255,255,0.90) !important;
+    border-color: rgba(0,0,0,0.12) !important;
+    color: #0A1628 !important;
+}
+[data-testid="stSelectbox"] label { color: #475569 !important; }
+
+[data-testid="stSlider"] label { color: #475569 !important; }
+
+[data-testid="stTabs"] [data-baseweb="tab-list"] {
+    background: rgba(255,255,255,0.80) !important;
+    border-bottom-color: rgba(0,0,0,0.08) !important;
+}
+[data-testid="stTabs"] [data-baseweb="tab"] { color: #475569 !important; }
+[data-testid="stTabs"] [aria-selected="true"] { color: #C8372D !important; border-color: #C8372D !important; }
+[data-testid="stTabs"] [data-baseweb="tab-panel"] {
+    background: rgba(255,255,255,0.80) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+}
+[data-testid="stTextInput"] input {
+    background: rgba(255,255,255,0.90) !important;
+    border-color: rgba(0,0,0,0.12) !important;
+    color: #0A1628 !important;
+}
+[data-testid="stExpander"] {
+    background: rgba(255,255,255,0.78) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+}
+[data-testid="stExpander"] summary { color: #1E293B !important; }
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background: rgba(255,255,255,0.78) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+}
+[data-testid="stDataFrame"] { border-color: rgba(0,0,0,0.08) !important; }
+
+/* ── BUTTONS ── */
+.stButton > button {
+    box-shadow: 0 4px 16px rgba(200,55,45,0.22) !important;
+}
+
+/* ── DIVIDERS ── */
+hr { border-color: rgba(0,0,0,0.08) !important; }
+
+/* ── KNOWN DARK INLINE BACKGROUNDS (brief output, empty states, etc.) ── */
+/* Override dark navy rgba(22,31,51,...) backgrounds used via Python constants */
+[style*="background:rgba(22,31,51"], [style*="background: rgba(22,31,51"] {
+    background: rgba(0,0,0,0.04) !important;
+}
+/* Override very-low-alpha white borders used for dashed empty states */
+[style*="dashed rgba(255,255,255,0.07)"] {
+    border-color: rgba(0,0,0,0.18) !important;
+}
+/* Override any remaining CARD (#0D0D14) or pure dark bg used inline */
+[style*="background:#0D0D14"], [style*="background: #0D0D14"],
+[style*="background:#08080C"], [style*="background: #08080C"] {
+    background: rgba(255,255,255,0.85) !important;
+}
+/* Ensure the stApp background gradient takes effect */
+[data-testid="stApp"], [class*="stApp"] {
+    background: linear-gradient(135deg, #EFF6FF 0%, #F0F4F8 50%, #EEF2F7 100%) !important;
+}
+/* Override any inline low-alpha white text that was used as muted */
+[style*="color:rgba(255,255,255,0.2)"], [style*="color: rgba(255,255,255,0.2)"] {
+    color: rgba(10,22,40,0.38) !important;
+}
+[style*="color:rgba(255,255,255,0.25)"], [style*="color: rgba(255,255,255,0.25)"] {
+    color: rgba(10,22,40,0.40) !important;
+}
+[style*="color:rgba(255,255,255,0.3)"], [style*="color: rgba(255,255,255,0.3)"] {
+    color: rgba(10,22,40,0.45) !important;
+}
+[style*="color:rgba(255,255,255,0.45)"], [style*="color: rgba(255,255,255,0.45)"] {
+    color: rgba(10,22,40,0.52) !important;
+}
+[style*="color:rgba(255,255,255,0.5)"], [style*="color: rgba(255,255,255,0.5)"] {
+    color: rgba(10,22,40,0.52) !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -860,61 +1185,102 @@ def page_command_center(df):
     _hero_bg    = "#FFFFFF"   if _is_light else "#05080F"
     _hero_num   = "#C8372D"   if _is_light else "#E83D3D"
     _hero_suf   = "#0A1628"   if _is_light else "#F1F5F9"
-    _hero_amber = "#B07A00"   if _is_light else "#F0A500"
+    _hero_amber = "#A16207"   if _is_light else "#F0A500"
     _hero_sub   = "#718096"   if _is_light else "#8494AD"
 
-    # Open hero container
-    st.markdown('<div class="hero-section">', unsafe_allow_html=True)
-    # Centered brand hero
+    # Hero inline color palette
+    _h_border    = "rgba(0,0,0,0.08)"          if _is_light else "rgba(255,255,255,0.07)"
+    _h_eyebrow   = "#C8372D"                   if _is_light else "#E53935"
+    _h_num_c     = "#C8372D"                   if _is_light else "#E53935"
+    _h_word_c    = "#0A1628"                   if _is_light else "#FFFFFF"
+    _h_subtitle  = "rgba(10,22,40,0.50)"       if _is_light else "rgba(255,255,255,0.45)"
+    _h_desc_c    = "rgba(10,22,40,0.48)"       if _is_light else "rgba(255,255,255,0.50)"
+    _h_source_c  = "rgba(10,22,40,0.30)"       if _is_light else "rgba(255,255,255,0.20)"
+    _kpi_border  = "rgba(0,0,0,0.08)"          if _is_light else "rgba(255,255,255,0.07)"
+    _kpi_bg      = "rgba(255,255,255,0.80)"    if _is_light else "rgba(255,255,255,0.02)"
+    _kpi_label   = "rgba(10,22,40,0.42)"       if _is_light else "rgba(255,255,255,0.30)"
+    _kpi_val_c   = "#0A1628"                   if _is_light else "#FFFFFF"
+    _kpi_desc    = "rgba(10,22,40,0.42)"       if _is_light else "rgba(255,255,255,0.30)"
+
+    # Hero + KPI block
+    n_crises = len(df)
+
+    # Number of people in need sitting in underfunded crises (funding < 70%)
+    underfunded_pop = int(df.loc[df['Funding_Ratio'] < 70, 'ipc_phase_3_plus'].sum())
+    # Fallback to total if filter removes everything
+    hero_num = underfunded_pop if underfunded_pop > 0 else int(df['ipc_phase_3_plus'].sum())
+    # Format: "87.3M" or "216M"
+    if hero_num >= 1_000_000:
+        hero_num_str = f"{hero_num / 1_000_000:.1f}M"
+    else:
+        hero_num_str = f"{hero_num:,}"
+
     st.markdown(f"""
-    <div style="text-align:center; padding:8px 0 20px;">
-        <div style="font-family:'Syne',sans-serif; font-size:clamp(48px,6vw,80px); font-weight:800;
-                    letter-spacing:-2px; color:{_hero_num}; line-height:1.0; margin-bottom:14px;">
-            BLIND<span style='color:{_hero_amber};'>SPOT</span>
+    <div class="bs-full-bleed" style="border-bottom:1px solid {_h_border};overflow:visible;padding-top:60px;padding-bottom:48px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:400;
+                    letter-spacing:4px;text-transform:uppercase;color:{_h_eyebrow};
+                    margin-bottom:28px;">
+            Humanitarian Funding Intelligence &nbsp;·&nbsp; Live Data
         </div>
-        <div style="font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:500;
-                    color:{_hero_amber}; letter-spacing:2px; margin-bottom:16px;">
-            Funding follows headlines. Lives don't.
+        <div style="font-family:'Syne',sans-serif;font-size:96px;
+                    font-weight:800;line-height:1;letter-spacing:-3px;
+                    color:{_h_num_c};margin-bottom:4px;overflow:visible;">
+            {hero_num_str}
         </div>
-        <div style="font-family:'DM Sans','IBM Plex Mono',sans-serif; font-size:13.5px;
-                    color:{_hero_sub}; max-width:600px; margin:0 auto; line-height:1.7;">
-            An AI-powered humanitarian intelligence platform that scores global crises by severity,
-            detects systemic funding misallocation, and optimises capital deployment
-            to where it saves the most lives — powered by OCHA FTS data.
+        <div style="font-family:'Syne',sans-serif;font-size:48px;
+                    font-weight:300;line-height:1.1;color:{_h_word_c};
+                    margin-bottom:16px;overflow:visible;">
+            people
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:28px;
+                    font-weight:300;line-height:1.3;color:{_h_subtitle};
+                    margin-bottom:32px;">
+            in active crises receive less than 70% of needed funding.
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:16px;font-weight:400;
+                    color:{_h_desc_c};line-height:1.8;max-width:640px;
+                    margin-bottom:32px;">
+            BLINDSPOT is an AI-powered humanitarian intelligence platform.
+            It scores every active crisis by population severity and funding coverage,
+            detects systematic misallocations in donor capital, and shows exactly
+            where moving money saves the most lives — sourced from OCHA FTS data.
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;
+                    color:{_h_source_c};letter-spacing:1px;">
+            Source: BLINDSPOT optimizer &nbsp;·&nbsp; OCHA FTS &nbsp;·&nbsp; IPC Global &nbsp;·&nbsp; Updated live
         </div>
     </div>
-    """, unsafe_allow_html=True)
-
-
-    # KPI pills + close hero
-    st.markdown(f"""
-        <div class="kpi-row">
-            <div class="kpi-pill">
-                <div class="kpi-label">People In Need</div>
-                <div class="kpi-value">{fmt_people(total_needed)}</div>
-            </div>
-            <div class="kpi-pill">
-                <div class="kpi-label">Funding Needed</div>
-                <div class="kpi-value">{fmt_b(total_req)}</div>
-            </div>
-            <div class="kpi-pill">
-                <div class="kpi-label">Avg. Coverage</div>
-                <div class="kpi-value" style="color:{af_color};">{avg_funded:.0f}%</div>
-            </div>
-            <div class="kpi-pill">
-                <div class="kpi-label">Active Crises</div>
-                <div class="kpi-value">{len(df)}</div>
-            </div>
+    <div class="bs-full-bleed" style="display:grid;grid-template-columns:repeat(4,1fr);">
+        <div style="padding:28px 32px;border-right:1px solid {_kpi_border};border-bottom:1px solid {_kpi_border};background:{_kpi_bg};">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">People In Need</div>
+            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">{fmt_people(total_needed)}</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Across {n_crises} active crisis zones</div>
+        </div>
+        <div style="padding:28px 32px;border-right:1px solid {_kpi_border};border-bottom:1px solid {_kpi_border};background:{_kpi_bg};">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Funding Required</div>
+            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">{fmt_b(total_req)}</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Total humanitarian ask, OCHA FTS</div>
+        </div>
+        <div style="padding:28px 32px;border-right:1px solid {_kpi_border};border-bottom:1px solid {_kpi_border};background:{_kpi_bg};">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Avg. Coverage</div>
+            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{af_color};line-height:1;margin-bottom:8px;">{avg_funded:.0f}%</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Mean funded ratio across all crises</div>
+        </div>
+        <div style="padding:28px 32px;border-bottom:1px solid {_kpi_border};background:{_kpi_bg};">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Active Crises</div>
+            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">{n_crises}</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Countries with IPC Phase&nbsp;3+ populations</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
     # ── MAP + QUEUE ──
-    st.markdown('<div style="padding:20px 28px 0;">', unsafe_allow_html=True)
-    left_col, right_col = st.columns([63, 37], gap="large")
+    _map_lbl_c = "rgba(10,22,40,0.40)" if _is_light else "rgba(255,255,255,0.25)"
+    st.markdown('<div style="padding:32px 0 0;">', unsafe_allow_html=True)
+    left_col, right_col = st.columns([58, 42], gap="small")
 
     with left_col:
-        st.markdown('<p style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:#F0A500;margin:0 0 10px 0;letter-spacing:1px;">Bubble size = people in need &nbsp;·&nbsp; Color = funding coverage &nbsp;·&nbsp; Drag to rotate</p>', unsafe_allow_html=True)
+        st.markdown(f'<p style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:{_map_lbl_c};margin:0 0 10px 0;letter-spacing:2px;text-transform:uppercase;">BUBBLE SIZE = PEOPLE IN NEED &nbsp;·&nbsp; COLOR = FUNDING COVERAGE &nbsp;·&nbsp; DRAG TO ROTATE</p>', unsafe_allow_html=True)
 
         import json as _json
         df_map = df.copy()
@@ -966,7 +1332,7 @@ def page_command_center(df):
 <style>
   * {{ margin:0; padding:0; box-sizing:border-box; }}
   body {{ background:{_globe_body_bg}; overflow:hidden; }}
-  #g {{ width:100%; height:520px; }}
+  #g {{ width:100%; height:580px; }}
   #tip {{
     position:fixed; display:none; pointer-events:none; z-index:9999;
     background:{_globe_tip_bg}; border:1px solid {_globe_tip_bdr};
@@ -1003,7 +1369,7 @@ const cont = document.getElementById('g');
 
 const world = Globe()(cont)
   .width(cont.offsetWidth)
-  .height(560)
+  .height(580)
   .backgroundColor({_globe_bg_clear})
   // No image texture — country polygons give us land/ocean contrast
   .globeImageUrl('')
@@ -1103,23 +1469,34 @@ world.pointOfView({{ lat: 20, lng: 20, altitude: 2.6 }});
 </script>
 </body></html>
 """
-        components.html(globe_html, height=575, scrolling=False)
+        components.html(globe_html, height=595, scrolling=False)
 
     with right_col:
-        st.markdown('<span class="section-label">Crisis Triage Queue</span>', unsafe_allow_html=True)
-        st.markdown('<div class="section-title" style="font-size:20px;">Top 10 Critical Zones</div>', unsafe_allow_html=True)
-
         df_q = df.nlargest(10, 'Crisis_Severity_Score').reset_index(drop=True)
-        # Column header row
-        q_html = f'''<div style="display:flex;align-items:center;gap:10px;padding:4px 10px 6px;border-bottom:1px solid {BORDER};margin-bottom:2px;">
-            <span style="width:22px;flex-shrink:0;"></span>
+
+        # Triage queue theme colors
+        _q_bg      = "rgba(255,255,255,0.75)" if _is_light else "rgba(255,255,255,0.018)"
+        _q_border  = "rgba(0,0,0,0.08)"        if _is_light else "rgba(255,255,255,0.07)"
+        _q_label   = "rgba(10,22,40,0.38)"     if _is_light else "rgba(255,255,255,0.30)"
+        _q_title   = "#0A1628"                  if _is_light else "#FFFFFF"
+        _q_sub     = "rgba(10,22,40,0.40)"     if _is_light else "rgba(255,255,255,0.30)"
+        _q_col_hdr = "rgba(10,22,40,0.32)"     if _is_light else "rgba(255,255,255,0.25)"
+        _q_legend  = "rgba(10,22,40,0.28)"     if _is_light else "rgba(255,255,255,0.20)"
+
+        q_html = f'''<div style="height:595px;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box;background:{_q_bg};border-left:1px solid {_q_border};padding:28px 24px 20px;backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_q_label};letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;display:block;">CRISIS TRIAGE QUEUE</span>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:{_q_title};margin-bottom:3px;line-height:1.2;">Top 10 Critical Zones</div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_q_sub};margin-bottom:14px;">Ranked by severity &times; funding gap</div>
+        <div style="display:flex;align-items:center;gap:12px;padding:0 16px 10px;border-bottom:1px solid {_q_border};margin-bottom:2px;">
+            <span style="width:20px;flex-shrink:0;"></span>
             <span style="width:9px;flex-shrink:0;"></span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{DIM};text-transform:uppercase;letter-spacing:1.3px;flex:1;">Country</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{DIM};text-transform:uppercase;letter-spacing:1.3px;min-width:36px;text-align:right;">Severity</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{DIM};text-transform:uppercase;letter-spacing:1.3px;width:40px;text-align:right;">Funded</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{DIM};text-transform:uppercase;letter-spacing:1.3px;width:16px;text-align:center;">↕</span>
-        </div>'''
-        q_html += '<div style="display:flex;flex-direction:column;gap:1px;">'
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_q_col_hdr};text-transform:uppercase;letter-spacing:2px;flex:1;">Country</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_q_col_hdr};text-transform:uppercase;letter-spacing:2px;min-width:32px;text-align:right;">Score</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_q_col_hdr};text-transform:uppercase;letter-spacing:2px;width:42px;text-align:right;">Fund%</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_q_col_hdr};width:16px;text-align:center;">&nbsp;</span>
+        </div>
+        <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">'''
+
         for i, row in df_q.iterrows():
             dc = sev_color(row['Crisis_Severity_Score'])
             fp = row['Funding_Ratio']
@@ -1135,46 +1512,53 @@ world.pointOfView({{ lat: 20, lng: 20, altitude: 2.6 }});
                 <span class="triage-pct">{fp:.0f}%</span>
                 <span class="triage-trend" style="color:{tc};">{trend}</span>
             </div>"""
-        q_html += '</div>'
-        st.markdown(q_html, unsafe_allow_html=True)
 
-        st.markdown(f"""
-        <div style="margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:8px;color:{DIM};text-transform:uppercase;letter-spacing:1.3px;line-height:1.9;">
-            Score = crisis severity (0–100) &nbsp;·&nbsp; <span style="color:{RED}">■</span> Critical &nbsp; <span style="color:{AMBER}">■</span> High &nbsp; <span style="color:{GREEN}">■</span> Moderate<br>
-            Trend: ↑ recovering &nbsp;·&nbsp; ↓ worsening
+        q_html += f'''</div>
+        <div style="margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:8px;color:{_q_legend};text-transform:uppercase;letter-spacing:2px;line-height:2.0;">
+            Score = Crisis Severity (0–100) &nbsp;·&nbsp; <span style="color:{RED}">■</span> Critical &nbsp; <span style="color:{AMBER}">■</span> High &nbsp; <span style="color:{GREEN}">■</span> Moderate
         </div>
-        """, unsafe_allow_html=True)
+        </div>'''
 
-        st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
+        st.markdown(q_html, unsafe_allow_html=True)
         if st.button("→ Open Crisis Detail", key="cc_goto_cd", use_container_width=True):
             st.session_state.page = 'crisis_detail'
             st.rerun()
 
     # ── BOTTOM METRIC CARDS ──
-    st.markdown(f'<hr style="margin:16px 0 12px;">', unsafe_allow_html=True)
-    st.markdown('<span class="section-label" style="padding:0 28px;">At a Glance · OCHA FTS</span>', unsafe_allow_html=True)
+    _hr_c = "rgba(0,0,0,0.08)" if _is_light else "rgba(255,255,255,0.07)"
+    st.markdown(f'<hr style="margin:24px 0 20px;border:none;border-top:1px solid {_hr_c};">', unsafe_allow_html=True)
+    st.markdown('<span class="section-label" style="display:block;margin-bottom:16px;">At a Glance · OCHA FTS</span>', unsafe_allow_html=True)
 
     red_zones = df[df['Crisis_Severity_Score'] > 75] if 'Is_Red_Zone' not in df.columns else df[df['Is_Red_Zone'] == True]
     most_severe  = df.loc[df['Crisis_Severity_Score'].idxmax()]
     least_funded = df.loc[df['Funding_Ratio'].idxmin()]
     total_gap    = (df['funding_required'] - df['funding_received']).clip(lower=0).sum()
 
-    mc1, mc2, mc3, mc4, mc5 = st.columns(5)
-    for col, val, lbl, color in [
-        (mc1, str(len(red_zones)),                        "Red Zone Crises",       RED),
-        (mc2, most_severe['Country_Name'],                "Highest Severity",      RED),
-        (mc3, f"{most_severe['Crisis_Severity_Score']:.0f}/100", "Peak Severity Score", RED),
-        (mc4, least_funded['Country_Name'],               "Least Funded Zone",     AMBER),
-        (mc5, fmt_b(total_gap),                           "Total Funding Gap",     AMBER),
-    ]:
-        with col:
-            st.markdown(f"""
-            <div class="metric-summary" style="margin:0 6px;">
-                <span class="val" style="color:{color};">{val}</span>
-                <span class="lbl">{lbl}</span>
-            </div>
-            """, unsafe_allow_html=True)
-
+    bottom_cards = f"""
+    <div style="padding:0 0 40px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
+        <div class="metric-summary">
+            <span class="val" style="color:{RED};">{len(red_zones)}</span>
+            <span class="lbl">Red Zone Crises</span>
+        </div>
+        <div class="metric-summary">
+            <span class="val" style="color:{RED};font-size:22px !important;">{most_severe['Country_Name']}</span>
+            <span class="lbl">Highest Severity</span>
+        </div>
+        <div class="metric-summary">
+            <span class="val" style="color:{RED};">{most_severe['Crisis_Severity_Score']:.0f}<span style="font-size:18px;font-weight:400;">/100</span></span>
+            <span class="lbl">Peak Severity Score</span>
+        </div>
+        <div class="metric-summary">
+            <span class="val" style="color:{AMBER};font-size:22px !important;">{least_funded['Country_Name']}</span>
+            <span class="lbl">Least Funded Zone</span>
+        </div>
+        <div class="metric-summary">
+            <span class="val" style="color:{AMBER};">{fmt_b(total_gap)}</span>
+            <span class="lbl">Total Funding Gap</span>
+        </div>
+    </div>
+    """
+    st.markdown(bottom_cards, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 
@@ -1184,7 +1568,7 @@ def page_crisis_detail(df):
         st.warning("No data loaded.")
         return
 
-    st.markdown('<div style="padding:20px 28px;">', unsafe_allow_html=True)
+    st.markdown('<div style="padding:20px 0;">', unsafe_allow_html=True)
 
     options = df.sort_values('Crisis_Severity_Score', ascending=False)['Country_Name'].tolist()
     def_idx = 0
@@ -1424,7 +1808,7 @@ def page_crisis_detail(df):
 
 # ─── PAGE 3: ALLOCATION SIMULATOR ─────────────────────────────────────────────
 def page_allocation_simulator(df):
-    st.markdown('<div style="padding:20px 28px;">', unsafe_allow_html=True)
+    st.markdown('<div style="padding:20px 0;">', unsafe_allow_html=True)
 
     st.markdown(f"""
     <span class="section-label">Allocation Simulator · Databricks</span>
@@ -1573,7 +1957,7 @@ def page_allocation_simulator(df):
 
 # ─── PAGE 4: METHODOLOGY ─────────────────────────────────────────────────────
 def page_methodology():
-    st.markdown('<div style="padding:20px 28px;">', unsafe_allow_html=True)
+    st.markdown('<div style="padding:20px 0;">', unsafe_allow_html=True)
 
     st.markdown(f"""
     <span class="section-label">Methodology & Architecture</span>
@@ -1704,6 +2088,15 @@ def render_chat(df):
     if not st.session_state.chat_open:
         return
 
+    _cl = st.session_state.get('theme', 'dark') == 'light'
+    _chat_bg     = "rgba(255,255,255,0.85)"        if _cl else CARD
+    _chat_border = "rgba(0,0,0,0.08)"              if _cl else BORDER
+    _chat_text   = "#1E293B"                        if _cl else TEXT
+    _chat_dim    = "rgba(10,22,40,0.35)"            if _cl else DIM
+    _bot_bubble  = "rgba(0,119,182,0.07)"           if _cl else "rgba(45,116,218,0.07)"
+    _usr_bubble  = "rgba(0,0,0,0.05)"              if _cl else "rgba(22,31,51,0.6)"
+    _bot_bdr     = "rgba(0,119,182,0.18)"          if _cl else "rgba(45,116,218,0.18)"
+
     top = df.loc[df['Crisis_Severity_Score'].idxmax()] if not df.empty else None
     top_name  = top['Country_Name'] if top is not None else "N/A"
     top_score = top['Crisis_Severity_Score'] if top is not None else 0
@@ -1716,12 +2109,12 @@ def render_chat(df):
                         f"allocation data.")
         })
 
-    st.markdown(f'<hr style="border-color:{BORDER};margin:0;">', unsafe_allow_html=True)
+    st.markdown(f'<hr style="border-color:{_chat_border};margin:0;">', unsafe_allow_html=True)
     st.markdown(f"""
-    <div style="background:{CARD};border-top:1px solid {BORDER};padding:14px 28px 8px;">
+    <div style="background:{_chat_bg};border-top:1px solid {_chat_border};padding:14px 0 8px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{TEXT};text-transform:uppercase;letter-spacing:2px;">◎ BLINDSPOT AI Agent</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:{DIM};text-transform:uppercase;letter-spacing:1.5px;">Gemini 2.5 Flash · Domain-restricted</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_chat_text};text-transform:uppercase;letter-spacing:2px;">◎ BLINDSPOT AI Agent</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:{_chat_dim};text-transform:uppercase;letter-spacing:1.5px;">Gemini 2.5 Flash · Domain-restricted</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1731,14 +2124,14 @@ def render_chat(df):
         for msg in st.session_state.messages:
             is_bot = msg['role'] == 'assistant'
             align = "flex-start" if is_bot else "flex-end"
-            bg = "rgba(45,116,218,0.07)" if is_bot else f"rgba(22,31,51,0.6)"
-            bdr = "rgba(45,116,218,0.18)" if is_bot else BORDER
+            bg = _bot_bubble if is_bot else _usr_bubble
+            bdr = _bot_bdr if is_bot else _chat_border
             pfx = "AI › " if is_bot else "YOU › "
             st.markdown(f"""
             <div style="display:flex;justify-content:{align};margin-bottom:5px;">
                 <div style="max-width:86%;background:{bg};border:1px solid {bdr};border-radius:7px;padding:7px 11px;">
-                    <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:{DIM};text-transform:uppercase;letter-spacing:1.5px;margin-bottom:3px;">{pfx}</div>
-                    <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:{TEXT};line-height:1.5;">{msg['content']}</div>
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:{_chat_dim};text-transform:uppercase;letter-spacing:1.5px;margin-bottom:3px;">{pfx}</div>
+                    <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:{_chat_text};line-height:1.5;">{msg['content']}</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -1790,7 +2183,7 @@ Top data:
                 st.rerun()
 
     st.markdown(f"""
-    <div style="padding:5px 28px 14px;background:{CARD};">
+    <div style="padding:5px 48px 14px;background:{CARD};">
         <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:{DIM};text-transform:uppercase;letter-spacing:1.5px;">
             BLINDSPOT exposes what the data shows. Action is yours. · Every misallocated dollar has a body count.
         </span>
@@ -1814,9 +2207,9 @@ elif page == 'methodology':           page_methodology()
 # ── Floating Chat Action Button ──
 _chat_open_js = 'true' if st.session_state.chat_open else 'false'
 _is_light_fab = st.session_state.get('theme', 'dark') == 'light'
-_fab_color     = "#C8372D" if _is_light_fab else "#E83D3D"
-_fab_hover     = "#A02820" if _is_light_fab else "#CC2E2E"
-_fab_shadow    = "rgba(200,55,45,0.30)" if _is_light_fab else "rgba(232,61,61,0.45)"
+_fab_color     = "#C8372D" if _is_light_fab else "rgba(229,57,53,0.9)"
+_fab_hover     = "#A02820" if _is_light_fab else "rgba(229,57,53,1.0)"
+_fab_shadow    = "rgba(200,55,45,0.30)" if _is_light_fab else "rgba(229,57,53,0.35)"
 
 components.html(f"""
 <script>
@@ -1843,16 +2236,18 @@ components.html(f"""
         fab.id = 'bs-chat-fab';
         fab.style.cssText = [
             'position:fixed;bottom:28px;right:28px;',
-            'width:56px;height:56px;border-radius:50%;',
+            'width:52px;height:52px;border-radius:50%;',
             'background:' + FAB_BG + ';',
+            'backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);',
+            'border:1px solid rgba(255,255,255,0.15);',
             'display:flex;align-items:center;justify-content:center;',
             'cursor:pointer;z-index:9999;',
-            'box-shadow:0 4px 24px ' + FAB_SHADE + ';',
+            'box-shadow:0 8px 32px ' + FAB_SHADE + ';',
             'transition:background 0.15s,transform 0.15s,box-shadow 0.15s;',
         ].join('');
         fab.addEventListener('mouseenter', function() {{
             this.style.background = FAB_HOVER;
-            this.style.transform  = 'scale(1.08)';
+            this.style.transform  = 'scale(1.06)';
         }});
         fab.addEventListener('mouseleave', function() {{
             this.style.background = FAB_BG;
@@ -1870,7 +2265,7 @@ components.html(f"""
         P.body.appendChild(fab);
     }} else {{
         fab.style.background  = FAB_BG;
-        fab.style.boxShadow   = '0 4px 24px ' + FAB_SHADE;
+        fab.style.boxShadow   = '0 8px 32px ' + FAB_SHADE;
     }}
     // Update icon based on chat state
     fab.innerHTML = isOpen
