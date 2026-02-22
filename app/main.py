@@ -147,16 +147,9 @@ st.markdown("""
     visibility: hidden !important;
     display: none !important;
 }
-/* Sidebar hidden visually but kept interactive for JS programmatic clicks */
 [data-testid="stSidebar"] {
-    position: fixed !important;
-    left: -9999px !important;
-    top: -9999px !important;
-    width: 1px !important;
-    height: 1px !important;
-    overflow: hidden !important;
-    opacity: 0 !important;
-    z-index: -1 !important;
+    visibility: hidden !important;
+    display: none !important;
 }
 /* ── LAYOUT CONTAINER SYSTEM ── */
 :root {
@@ -587,6 +580,20 @@ for key, default in [
     if key not in st.session_state:
         st.session_state[key] = default
 
+# ── Handle navbar actions sent via URL query param (JS → Python bridge) ──
+_bs_action = st.query_params.get('_bs_action', '')
+if _bs_action:
+    st.query_params.clear()
+    if _bs_action.startswith('page__'):
+        st.session_state.page = _bs_action[6:]
+    elif _bs_action == 'chat_toggle':
+        st.session_state.chat_open = not st.session_state.chat_open
+    elif _bs_action == 'theme_toggle':
+        _nt = 'light' if st.session_state.get('theme', 'dark') == 'dark' else 'dark'
+        st.session_state['theme'] = _nt
+        st.session_state['dark_mode'] = (_nt == 'dark')
+    st.rerun()
+
 # Keep dark_mode and theme in sync (theme is the canonical key)
 if st.session_state.get('theme') == 'light':
     st.session_state['dark_mode'] = False
@@ -998,28 +1005,6 @@ def render_navbar(df):
     theme_icon = "☀" if is_light else "☾"
     cur_page   = st.session_state.get('page', 'command_center')
 
-    # ── Hidden routing buttons — placed in sidebar (CSS-hidden, zero page space) ──
-    with st.sidebar:
-        _btn_defs = [
-            ("command_center",       "nav_home"),
-            ("crisis_detail",        "nav_cd"),
-            ("allocation_simulator", "nav_alloc"),
-            ("methodology",          "nav_meth"),
-            ("chat_toggle",          "nav_chat"),
-            ("theme_toggle",         "nav_theme"),
-        ]
-        for action, key in _btn_defs:
-            if st.button("·", key=key):
-                if action == "chat_toggle":
-                    st.session_state.chat_open = not st.session_state.chat_open
-                elif action == "theme_toggle":
-                    new_t = 'light' if st.session_state.get('theme','dark') == 'dark' else 'dark'
-                    st.session_state['theme']     = new_t
-                    st.session_state['dark_mode'] = (new_t == 'dark')
-                else:
-                    st.session_state.page = action
-                st.rerun()
-
     # ── Floating pill navbar injected into parent document via components.html ──
     chat_label  = "✕ Chat" if st.session_state.chat_open else "AI Chat"
     _page_json  = cur_page  # current active page for JS active-state highlight
@@ -1125,23 +1110,34 @@ def render_navbar(df):
   var pill = P.createElement('div');
   pill.id = 'bs-pill-nav';
 
+  // ── Navigation action: set ?_bs_action= URL param → Python reads & reruns ──
+  function navTo(action) {{
+    window.parent.location.search = '?_bs_action=' + action + '&_t=' + Date.now();
+  }}
+
   // Logo (click → dashboard)
   var logo = P.createElement('div');
   logo.className = 'bsp-logo';
   logo.innerHTML = 'BLIND<em>SPOT</em>';
   logo.title = 'Go to Dashboard';
-  logo.addEventListener('click', function() {{ clickHiddenBtn(P, 'nav_home'); }});
+  logo.addEventListener('click', function() {{ navTo('page__command_center'); }});
   pill.appendChild(logo);
 
   // Separator
   pill.appendChild(makeSep(P));
 
   // Nav items
+  var pageMap = {{
+    'command_center':      'page__command_center',
+    'crisis_detail':       'page__crisis_detail',
+    'allocation_simulator':'page__allocation_simulator',
+    'methodology':         'page__methodology',
+  }};
   pages.forEach(function(pg) {{
     var btn = P.createElement('button');
     btn.className = 'bsp-item' + (curPage === pg[0] ? ' bsp-active' : '');
     btn.textContent = pg[1];
-    btn.addEventListener('click', function() {{ clickHiddenBtn(P, pg[2]); }});
+    btn.addEventListener('click', (function(action){{ return function(){{ navTo(action); }}; }})(pageMap[pg[0]] || ('page__'+pg[0])));
     pill.appendChild(btn);
   }});
 
@@ -1150,7 +1146,7 @@ def render_navbar(df):
   var chatBtn = P.createElement('button');
   chatBtn.className = 'bsp-item';
   chatBtn.textContent = '{chat_label}';
-  chatBtn.addEventListener('click', function() {{ clickHiddenBtn(P, 'nav_chat'); }});
+  chatBtn.addEventListener('click', function() {{ navTo('chat_toggle'); }});
   pill.appendChild(chatBtn);
 
   // Theme toggle
@@ -1158,7 +1154,7 @@ def render_navbar(df):
   tog.className = 'bsp-toggle';
   tog.innerHTML = '{theme_icon}';
   tog.title = isLight ? 'Switch to dark mode' : 'Switch to light mode';
-  tog.addEventListener('click', function() {{ clickHiddenBtn(P, 'nav_theme'); }});
+  tog.addEventListener('click', function() {{ navTo('theme_toggle'); }});
   pill.appendChild(tog);
 
   P.body.appendChild(pill);
@@ -1169,47 +1165,6 @@ def render_navbar(df):
     return sep;
   }}
 
-  // Keys in sidebar order (must match _btn_defs in Python)
-  var NAV_KEYS = ['nav_home','nav_cd','nav_alloc','nav_meth','nav_chat','nav_theme'];
-
-  function getSidebarBtns(doc) {{
-    // All our routing buttons live exclusively in the sidebar
-    return doc.querySelectorAll('[data-testid="stSidebar"] [data-testid="stButton"] button');
-  }}
-
-  function tagBtns(doc) {{
-    var btns = getSidebarBtns(doc);
-    for (var i = 0; i < Math.min(btns.length, NAV_KEYS.length); i++) {{
-      btns[i].setAttribute('data-bs-key', NAV_KEYS[i]);
-    }}
-  }}
-
-  function clickHiddenBtn(doc, key) {{
-    // Primary: sidebar-specific, index-stable lookup
-    var sBtns = getSidebarBtns(doc);
-    var idx = NAV_KEYS.indexOf(key);
-    if (idx !== -1 && sBtns[idx]) {{
-      sBtns[idx].click();
-      return;
-    }}
-    // Secondary: data-bs-key attribute (surviving from last tagBtns call)
-    var allBtns = doc.querySelectorAll('button');
-    for (var i = 0; i < allBtns.length; i++) {{
-      if (allBtns[i].getAttribute('data-bs-key') === key) {{
-        allBtns[i].click();
-        return;
-      }}
-    }}
-  }}
-
-  // Tag immediately + re-tag whenever sidebar DOM changes (survives Streamlit reruns)
-  tagBtns(P);
-  setTimeout(function() {{ tagBtns(P); }}, 400);
-  var _obs = new MutationObserver(function() {{ tagBtns(P); }});
-  var _sidebar = P.querySelector('[data-testid="stSidebar"]');
-  if (_sidebar) _obs.observe(_sidebar, {{childList:true, subtree:true}});
-  // Also watch body in case sidebar appears after initial render
-  _obs.observe(P.body, {{childList:true, subtree:false}});
 }})();
 </script>
 """, height=0, scrolling=False)
@@ -2788,16 +2743,7 @@ components.html(f"""
             this.style.transform  = 'scale(1)';
         }});
         fab.addEventListener('click', function() {{
-            // Sidebar-specific: nav_chat is always index 4 (0-based)
-            var sBtns = P.querySelectorAll('[data-testid="stSidebar"] [data-testid="stButton"] button');
-            if (sBtns[4]) {{ sBtns[4].click(); return; }}
-            // Fallback: data-bs-key attribute
-            var allBtns = P.querySelectorAll('button');
-            for (var j = 0; j < allBtns.length; j++) {{
-                if (allBtns[j].getAttribute('data-bs-key') === 'nav_chat') {{
-                    allBtns[j].click(); return;
-                }}
-            }}
+            window.parent.location.search = '?_bs_action=chat_toggle&_t=' + Date.now();
         }});
         P.body.appendChild(fab);
     }} else {{
