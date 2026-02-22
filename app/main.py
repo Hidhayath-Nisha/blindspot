@@ -561,135 +561,6 @@ iframe { border: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ─── CUSTOM CURSOR ─────────────────────────────────────────────────────────────
-# Must use components.html() — st.markdown() does NOT execute <script> tags
-# (React's dangerouslySetInnerHTML strips them). The iframe reaches parent.document.
-components.html("""
-<script>
-(function () {
-    var p = window.parent;
-    var pd = p.document;
-
-    /* Guard: only initialise once across Streamlit re-renders */
-    if (p.__bsCursorInit) return;
-    p.__bsCursorInit = true;
-
-    /* ── Inject CSS into parent <head> ── */
-    var style = pd.createElement('style');
-    style.id  = 'bs-cur-style';
-    style.textContent =
-        '*, *::before, *::after { cursor: none !important; }' +
-
-        '#bs-cur-ring {' +
-        '  position:fixed; top:0; left:0; pointer-events:none; z-index:2147483647;' +
-        '  width:26px; height:26px; margin-left:-13px; margin-top:-13px;' +
-        '  border:2px solid #E53935; border-radius:50%;' +
-        '  transition: width .22s cubic-bezier(.25,.46,.45,.94),' +
-        '              height .22s cubic-bezier(.25,.46,.45,.94),' +
-        '              margin .22s cubic-bezier(.25,.46,.45,.94),' +
-        '              background .22s, border-color .22s, opacity .2s;' +
-        '  will-change:transform,width,height;' +
-        '}' +
-
-        '#bs-cur-dot {' +
-        '  position:fixed; top:0; left:0; pointer-events:none; z-index:2147483647;' +
-        '  width:5px; height:5px; margin-left:-2.5px; margin-top:-2.5px;' +
-        '  background:#E53935; border-radius:50%;' +
-        '  will-change:transform; transition:opacity .15s;' +
-        '}' +
-
-        '#bs-cur-ring.bs-hover {' +
-        '  width:52px; height:52px; margin-left:-26px; margin-top:-26px;' +
-        '  border-color:rgba(229,57,53,0.55); background:rgba(229,57,53,0.07);' +
-        '}' +
-
-        '.bs-lift { transform:translateY(-3px) !important;' +
-        '  transition:transform .22s cubic-bezier(.25,.46,.45,.94) !important; }';
-
-    pd.head.appendChild(style);
-
-    /* ── Create cursor divs on parent <body> (outside React tree) ── */
-    var ring = pd.createElement('div'); ring.id = 'bs-cur-ring';
-    var dot  = pd.createElement('div'); dot.id  = 'bs-cur-dot';
-    pd.body.appendChild(ring);
-    pd.body.appendChild(dot);
-
-    var mx = -200, my = -200, rx = -200, ry = -200;
-
-    /* Dot snaps to mouse instantly via GPU transform */
-    pd.addEventListener('mousemove', function (e) {
-        mx = e.clientX; my = e.clientY;
-        dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
-    }, { passive: true });
-
-    /* Ring follows with smooth lerp at 60 fps */
-    (function loop() {
-        rx += (mx - rx) * 0.20;
-        ry += (my - ry) * 0.20;
-        ring.style.transform = 'translate(' + rx + 'px,' + ry + 'px)';
-        p.requestAnimationFrame(loop);
-    })();
-
-    /* Hover effects */
-    var LIFT_SEL = '.triage-row,.kpi-pill,.metric-summary,.impact-box,.tech-card,.rag-card,.identity-card,.metric-cell';
-    var RING_SEL = 'a,button,[role="button"],.bs-nav-item,.bs-toggle,h1,h2,h3';
-
-    pd.addEventListener('mouseover', function (e) {
-        var lift = e.target.closest(LIFT_SEL);
-        var ro   = !lift && e.target.closest(RING_SEL);
-        if (lift)    { ring.classList.add('bs-hover'); lift.classList.add('bs-lift'); }
-        else if (ro) { ring.classList.add('bs-hover'); }
-    }, { passive: true });
-
-    pd.addEventListener('mouseout', function (e) {
-        ring.classList.remove('bs-hover');
-        var lift = e.target.closest(LIFT_SEL);
-        if (lift) lift.classList.remove('bs-lift');
-    }, { passive: true });
-
-    pd.addEventListener('mouseleave', function () { dot.style.opacity='0'; ring.style.opacity='0'; });
-    pd.addEventListener('mouseenter', function () { dot.style.opacity='1'; ring.style.opacity='1'; });
-
-    /* ── Forward mouse events from ALL child iframes (globe, navbar, chat…) ── */
-    function bridgeIframe(iframe) {
-        try {
-            var idoc = iframe.contentDocument || iframe.contentWindow.document;
-            idoc.addEventListener('mousemove', function (e) {
-                var r = iframe.getBoundingClientRect();
-                mx = r.left + e.clientX;
-                my = r.top  + e.clientY;
-                dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
-            }, { passive: true });
-            idoc.addEventListener('mouseleave', function () {
-                dot.style.opacity='0'; ring.style.opacity='0';
-            });
-            idoc.addEventListener('mouseenter', function () {
-                dot.style.opacity='1'; ring.style.opacity='1';
-            });
-        } catch(e) { /* cross-origin iframe — skip */ }
-    }
-
-    /* Bridge iframes already in DOM */
-    var frames = pd.querySelectorAll('iframe');
-    for (var i = 0; i < frames.length; i++) bridgeIframe(frames[i]);
-
-    /* Bridge iframes added later (Streamlit lazy-renders them) */
-    var obs = new MutationObserver(function (mutations) {
-        mutations.forEach(function (m) {
-            m.addedNodes.forEach(function (n) {
-                if (n.tagName === 'IFRAME') { bridgeIframe(n); }
-                else if (n.querySelectorAll) {
-                    var iframes = n.querySelectorAll('iframe');
-                    for (var j = 0; j < iframes.length; j++) bridgeIframe(iframes[j]);
-                }
-            });
-        });
-    });
-    obs.observe(pd.body, { childList: true, subtree: true });
-})();
-</script>
-""", height=0)
-
 
 # ─── SESSION STATE ─────────────────────────────────────────────────────────────
 for key, default in [
@@ -2221,7 +2092,7 @@ def page_allocation_simulator(df):
         st.session_state.opt_budget = budget_m
     with ctrl2:
         st.markdown('<div style="height:26px;"></div>', unsafe_allow_html=True)
-        run_clicked = st.button("▶ RUN OPTIMIZER", key="run_opt_btn", use_container_width=True)
+        run_clicked = st.button("▶ CHECK WHERE TO FUND!", key="run_opt_btn", use_container_width=True)
 
 
     if run_clicked:
