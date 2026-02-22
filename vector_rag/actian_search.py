@@ -1,89 +1,154 @@
-# ==============================================================================
-# TRIAGE - LAYER 4: COMPARABLE CRISIS RAG SYSTEM (ACTIAN VECTORAI)
-# ==============================================================================
-# This module connects to the Dockerized Actian VectorAI database.
-# In a hackathon setting, it embeds 5-10 historical UN Humanitarian Response Plan 
-# (HRP) documents to find the "closest historical match" to a current crisis.
-# 
-# Pre-requisite: 
-# `docker pull williamimoh/actian-vectorai-db:1.0b`
-# ==============================================================================
+"""
+TRIAGE - Semantic Vector Search Layer (Actian VectorAI DB)
 
-# Note: The exact Python SDK for 'williamimoh/actian-vectorai-db:1.0b' depends on 
-# their specific wrapper. We are writing the architecture assuming standard VectorDB 
-# interactions (Connect -> Embed -> Insert -> Query).
-import json
+Uses AsyncCortexClient (recommended for M1/ARM compatibility over sync CortexClient).
+Falls back to in-memory cosine similarity if Actian is unavailable.
+
+Docker: cd actian-vectorAI-db-beta && docker compose up
+"""
+
+import asyncio
 import logging
+import numpy as np
 
-class ActianVectorDB:
-    def __init__(self, host="localhost", port=5000):
-        """
-        Initializes connection to the Actian Docker container.
-        """
-        self.host = host
-        self.port = port
-        self.collection_name = "historical_crises"
-        logging.info(f"Connected to Actian VectorAI DB at {host}:{port}")
+COLLECTION_NAME = "triage_crises"
+EMBEDDING_DIM = 384  # all-MiniLM-L6-v2
 
-    def create_embedding(self, text):
-        """
-        Dummy embedding function for the skeleton. 
-        In production, use SentenceTransformers or OpenAI embeddings.
-        """
-        # Returns a dummy vector of length 3 (For real use: 384 or 1536 dims)
-        return [0.1, 0.5, 0.8] 
+_memory_index = {
+    "vectors": None,
+    "payloads": []
+}
 
-    def ingest_historical_documents(self, documents):
-        """
-        Takes a list of JSON documents (Historical UN Crises), embeds their text,
-        and saves them to the Actian DB.
-        """
-        print(f"Ingesting {len(documents)} historical UN documents into Actian DB...")
-        
-        for doc in documents:
-            vector = self.create_embedding(doc['summary_text'])
-            # Simulated Insert Command for Actian
-            # e.g., actian_client.insert(collection=self.collection_name, id=doc['id'], vector=vector, metadata=doc)
-            pass
-        
-        print("Ingestion complete.")
-        
-    def find_comparable_crisis(self, current_crisis_profile):
-        """
-        The RAG query: Takes the current crisis parameters (e.g. Sudan, High Severity, Health Focus)
-        and finds the closest historical match.
-        """
-        print(f"Searching Actian VectorAI for matches to: {current_crisis_profile['iso3']}...")
-        
-        # Simulated embedding of the current crisis profile
-        query_vector = self.create_embedding(str(current_crisis_profile))
-        
-        # Simulated Actian Search Results
-        # e.g., result = actian_client.query(collection=self.collection_name, vector=query_vector, top_k=1)
-        
-        # MOCK RETURN FOR HACKATHON DEMO:
-        match = {
-            "historical_crisis": "Somalia Famine (2011)",
-            "similarity_score": "84%",
-            "what_worked": "Rapid deployment of unconditional cash transfers and localized WASH interventions.",
-            "funding_secured": "$1.2 Billion"
+
+def _get_embedding_model():
+    from sentence_transformers import SentenceTransformer
+    return SentenceTransformer("all-MiniLM-L6-v2")
+
+
+def _row_to_text(row: dict) -> str:
+    parts = [f"Country: {row.get('Country_Name', row.get('iso3', 'Unknown'))}"]
+    if 'Crisis_Severity_Score' in row:
+        parts.append(f"Crisis Severity Score: {row['Crisis_Severity_Score']:.2f}")
+    if 'Funding_Ratio' in row:
+        parts.append(f"Funding Coverage: {row['Funding_Ratio']:.1f}%")
+    if 'funding_required' in row:
+        parts.append(f"Funding Required: ${float(row.get('funding_required', 0)):,.0f}")
+    if 'funding_received' in row:
+        parts.append(f"Funding Received: ${float(row.get('funding_received', 0)):,.0f}")
+    return ". ".join(parts)
+
+
+def _cosine_similarity(query_vec: np.ndarray, matrix: np.ndarray) -> np.ndarray:
+    query_norm = query_vec / (np.linalg.norm(query_vec) + 1e-10)
+    matrix_norms = matrix / (np.linalg.norm(matrix, axis=1, keepdims=True) + 1e-10)
+    return matrix_norms @ query_norm
+
+
+async def _actian_ingest_async(vectors, payloads):
+    from cortex import AsyncCortexClient, DistanceMetric
+    async with AsyncCortexClient("localhost:50051") as client:
+        await client.health_check()
+        if await client.has_collection(COLLECTION_NAME):
+            await client.delete_collection(COLLECTION_NAME)
+        await client.create_collection(
+            name=COLLECTION_NAME,
+            dimension=EMBEDDING_DIM,
+            distance_metric=DistanceMetric.COSINE,
+        )
+        await client.batch_upsert(
+            collection=COLLECTION_NAME,
+            ids=list(range(len(payloads))),
+            vectors=[v.tolist() for v in vectors],
+            payloads=payloads,
+        )
+    return len(payloads)
+
+
+async def _actian_search_async(query_vector, top_k):
+    from cortex import AsyncCortexClient
+    async with AsyncCortexClient("localhost:50051") as client:
+        results = await client.search(
+            collection=COLLECTION_NAME,
+            query=query_vector.tolist(),
+            top_k=top_k,
+        )
+    return [r.payload for r in results]
+
+
+def ingest_dataframe(df):
+    """
+    Embeds all crisis rows and stores in Actian VectorAI DB (async client).
+    Falls back to in-memory index if Actian is unavailable.
+    Always returns True — semantic search will work either way.
+    """
+    global _memory_index
+
+    model = _get_embedding_model()
+    rows = df.to_dict(orient="records")
+    texts = [_row_to_text(r) for r in rows]
+    vectors = model.encode(texts, show_progress_bar=False)
+
+    payloads = [
+        {
+            "iso3": str(r.get("iso3", "")),
+            "country": str(r.get("Country_Name", r.get("iso3", ""))),
+            "severity": float(r.get("Crisis_Severity_Score", 0)),
+            "funding_ratio": float(r.get("Funding_Ratio", 0)),
+            "funding_required": float(r.get("funding_required", 0)),
+            "funding_received": float(r.get("funding_received", 0)),
+            "text": texts[i],
         }
-        
-        return match
-
-if __name__ == "__main__":
-    db = ActianVectorDB()
-    
-    # Simulate loading 2 historical documents
-    historical_docs = [
-        {"id": "SOM_2011", "summary_text": "Severe drought and conflict led to famine in Somalia..."},
-        {"id": "YEM_2017", "summary_text": "Cholera outbreak exacerbated by active conflict in Yemen..."}
+        for i, r in enumerate(rows)
     ]
-    
-    db.ingest_historical_documents(historical_docs)
-    
-    current_crisis = {"iso3": "SDN", "Severity": "Extremely High", "Cluster_Need": "Food/Health"}
-    best_match = db.find_comparable_crisis(current_crisis)
-    
-    print("\n============== ACTIAN VECTOR SEARCH RESULT ==============")
-    print(json.dumps(best_match, indent=4))
+
+    # Try Actian with AsyncCortexClient
+    try:
+        n = asyncio.run(_actian_ingest_async(vectors, payloads))
+        logging.info(f"Actian VectorAI DB: Ingested {n} crisis records.")
+    except Exception as e:
+        logging.warning(f"Actian unavailable, using in-memory index: {e}")
+
+    # Always build in-memory fallback
+    _memory_index["vectors"] = vectors
+    _memory_index["payloads"] = payloads
+    logging.info(f"In-memory index: {len(rows)} crisis records ready.")
+
+    return True
+
+
+def search_relevant_context(query: str, top_k: int = 5) -> str:
+    """
+    Semantically searches for the most relevant crisis records.
+    Tries Actian AsyncCortexClient first, falls back to in-memory cosine similarity.
+    """
+    model = _get_embedding_model()
+    query_vector = model.encode([query], show_progress_bar=False)[0]
+
+    results = []
+    actian_used = False
+
+    try:
+        results = asyncio.run(_actian_search_async(query_vector, top_k))
+        actian_used = True
+    except Exception:
+        pass
+
+    if not results and _memory_index["vectors"] is not None:
+        scores = _cosine_similarity(query_vector, _memory_index["vectors"])
+        top_indices = np.argsort(scores)[::-1][:top_k]
+        results = [_memory_index["payloads"][i] for i in top_indices]
+
+    if not results:
+        return None
+
+    source = "Actian VectorAI DB" if actian_used else "Semantic Index"
+    lines = [f"Relevant Crisis Data [{source}]:"]
+    for p in results:
+        lines.append(
+            f"- {p['country']} ({p['iso3']}): "
+            f"Severity={p['severity']:.2f}, "
+            f"Funding Coverage={p['funding_ratio']:.1f}%, "
+            f"Required=${p['funding_required']:,.0f}, "
+            f"Received=${p['funding_received']:,.0f}"
+        )
+    return "\n".join(lines)

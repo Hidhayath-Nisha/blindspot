@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import plotly.graph_objects as go
 import sys
 import os
 from dotenv import load_dotenv
@@ -17,7 +16,7 @@ if parent_dir not in sys.path:
 try:
     from models.allocation_optimizer import run_allocation_optimizer
     from app.genai_briefs import generate_safety_brief_prompts
-    from vector_rag.actian_search import ActianVectorDB
+    from vector_rag.actian_search import ingest_dataframe, search_relevant_context
 except Exception as e:
     st.error(f"Module import error: {e}")
 
@@ -153,17 +152,21 @@ def load_data():
             pass
             
     if df.empty:
+        xgb_path = os.path.join(parent_dir, "assets", "xgboost_output.csv")
         optimized_path = os.path.join(parent_dir, "assets", "triage_master_optimized.csv")
         scores_path = os.path.join(parent_dir, "assets", "triage_master_scores.csv")
         
-        if os.path.exists(optimized_path):
+        if os.path.exists(xgb_path):
+            df = pd.read_csv(xgb_path)
+        elif os.path.exists(optimized_path):
             df = pd.read_csv(optimized_path)
         elif os.path.exists(scores_path):
             df = pd.read_csv(scores_path)
         else:
             st.error("No triage scoring data found. Run Databricks pipelines first.")
             return pd.DataFrame({'iso3': [], 'Crisis_Severity_Score': [], 'Funding_Coverage_Ratio': []})
-            
+
+    # Use existing Lat/Lon if present, otherwise fill from fallback dict
     fallback_geo = {
         'AFG': [33.9, 67.7], 'UKR': [48.3, 31.1], 'SDN': [12.8, 30.2], 
         'SYR': [34.8, 38.9], 'YEM': [15.5, 48.5], 'COD': [-4.0, 21.7],
@@ -171,19 +174,18 @@ def load_data():
         'MMR': [21.9, 95.9], 'PSE': [31.9, 35.2], 'VEN': [6.4, -66.5],
         'ZAF': [-30.5, 22.9], 'SSD': [6.8, 31.3], 'NGA': [9.0, 8.6]
     }
-    
-    lats, lons = [], []
-    for iso in df['iso3']:
-        if iso in fallback_geo:
-            lats.append(fallback_geo[iso][0])
-            lons.append(fallback_geo[iso][1])
-        else:
-            lats.append(0.0)
-            lons.append(0.0)
-            
-    df['Lat'] = lats
-    df['Lon'] = lons
-    df['Country_Name'] = df['iso3']
+
+    if 'Lat' not in df.columns or 'Lon' not in df.columns:
+        lats, lons = [], []
+        for iso in df['iso3']:
+            coord = fallback_geo.get(iso, [0.0, 0.0])
+            lats.append(coord[0])
+            lons.append(coord[1])
+        df['Lat'] = lats
+        df['Lon'] = lons
+
+    if 'Country_Name' not in df.columns:
+        df['Country_Name'] = df['iso3']
     
     if 'funding_required' in df.columns:
         df['Funding_Ratio'] = np.where(df['funding_required'] > 0, 
@@ -197,6 +199,12 @@ def load_data():
 
 with st.spinner("Connecting to Databricks Unity SQL..."):
     df_crises = load_data()
+
+ACTIAN_READY = False
+try:
+    ACTIAN_READY = ingest_dataframe(df_crises)
+except Exception:
+    ACTIAN_READY = False
 
 header_img_path = os.path.join(parent_dir, "assets", "header.webp")
 if os.path.exists(header_img_path):
@@ -233,7 +241,7 @@ with top_left:
         lat="Lat",
         lon="Lon",
         hover_name="Country_Name",
-        hover_data={"Crisis_Severity_Score": True, "Funding_Ratio": True, "Size": False, "Lat": False, "Lon": False},
+        hover_data={"Crisis_Severity_Score": True, "Funding_Ratio": True, "Projected_Lives_Saved": ('Projected_Lives_Saved' in df_map.columns), "Size": False, "Lat": False, "Lon": False},
         size="Size",
         color="Funding_Ratio",
         color_continuous_scale=px.colors.sequential.Blues[::-1], 
@@ -311,11 +319,16 @@ with bot_left:
         for idx, row in df_sorted.iterrows():
             proportion = row['Crisis_Severity_Score'] / total_severity_top10
             allocation = total_budget * proportion
-            allocations.append({
+            entry = {
                 "Crisis Zone": row['Country_Name'],
                 "Severity Score": round(row['Crisis_Severity_Score'], 2),
-                "Recommended Allocation": f"${allocation / 1e6:.1f}M"
-            })
+                "Recommended Allocation": f"${allocation / 1e6:.1f}M",
+            }
+            if 'Projected_Lives_Saved' in row:
+                entry["Projected Lives Saved"] = int(row['Projected_Lives_Saved'])
+            if 'Is_Red_Zone' in row:
+                entry["Red Zone"] = "Yes" if row['Is_Red_Zone'] else "No"
+            allocations.append(entry)
             
         if allocations:
             df_alloc = pd.DataFrame(allocations)
@@ -331,16 +344,22 @@ with bot_right:
     bot_icon_path = os.path.join(parent_dir, "assets", "bot-icon.jpg")
     if not os.path.exists(bot_icon_path):
         bot_icon_path = None
+    user_icon_path = os.path.join(parent_dir, "assets", "face.png")
+    if not os.path.exists(user_icon_path):
+        user_icon_path = None
     
     chat_container = st.container(height=310, border=False)
     
     if "messages" not in st.session_state:
         st.session_state.messages = []
-        st.session_state.messages.append({"role": "assistant", "content": f"Connected to Databricks cluster. {most_severe['Country_Name']} is the highest severity zone (Score: {most_severe['Crisis_Severity_Score']}). How can I assist with your deployment analysis?"})
+        st.session_state.messages.append({"role": "assistant", "content": f"Welcome! I'm connected to your crisis database. Right now, **{most_severe['Country_Name']}** is flagged as the highest severity zone with a score of {most_severe['Crisis_Severity_Score']}. Feel free to ask me anything about the data, funding priorities, or crisis analysis."})
 
     with chat_container:
         for message in st.session_state.messages:
-            avatar_to_use = bot_icon_path if message["role"] == "assistant" else None
+            if message["role"] == "assistant":
+                avatar_to_use = bot_icon_path
+            else:
+                avatar_to_use = user_icon_path
             with st.chat_message(message["role"], avatar=avatar_to_use):
                 st.markdown(message["content"])
 
@@ -364,35 +383,48 @@ if submit and prompt:
         try:
             from google import genai
             client = genai.Client(api_key=api_key)
-            
-            df_summary = df_crises[['iso3', 'Crisis_Severity_Score', 'funding_required', 'funding_received']].head(5).to_string()
-            
-            sys_prompt = f"""You are TRIAGE AI, an analytical assistant for a Sovereign Wealth fund. 
-Strict rules:
-1. ONLY answer questions related to the humanitarian crisis map, capital allocation, geopolitical risk, and the data provided.
-2. Do not generate code, stories, or answer general knowledge questions.
-3. If unrelated: "System Alert: I am authorized only to analyze humanitarian triage and capital allocation data."
-4. Be professional, succinct, and quantitative. No emojis.
 
-Current Context:
-Most severe crisis: {most_severe['Country_Name']} (Severity: {most_severe['Crisis_Severity_Score']})
-Data Summary:
-{df_summary}
+            rag_context = None
+            if ACTIAN_READY:
+                try:
+                    rag_context = search_relevant_context(prompt, top_k=5)
+                except Exception:
+                    rag_context = None
+
+            if not rag_context:
+                df_summary = df_crises[['iso3', 'Crisis_Severity_Score', 'funding_required', 'funding_received']].head(5).to_string()
+                rag_context = f"Top 5 Crisis Records (direct data):\n{df_summary}"
+
+            sys_prompt = f"""You are TRIAGE AI — a knowledgeable and approachable assistant helping analysts understand humanitarian crises and funding allocation.
+
+Your tone:
+- Warm, clear, and professional. You genuinely care about the people affected by these crises.
+- Use data when available, but explain it in a way that feels natural, not robotic.
+- Be concise but thoughtful. Avoid jargon unless the user is clearly technical.
+
+Guidelines:
+1. Answer questions about humanitarian crises, geopolitical risk, capital allocation, and funding worldwide.
+2. When the data below covers a country, reference those specific numbers naturally in your answer.
+3. When a country isn't in the data, draw on your general knowledge — just mention that you're using background knowledge rather than live figures.
+4. If someone asks something completely unrelated (like coding or recipes), gently redirect: "That's a bit outside my wheelhouse — I'm here to help with crisis analysis and funding priorities. What would you like to know about the data?"
+5. Keep answers focused and well-structured. No emojis.
+
+Live Data Context (from Databricks):
+Most severe tracked crisis: {most_severe['Country_Name']} (Severity Score: {most_severe['Crisis_Severity_Score']})
+{rag_context}
 """
             response = client.models.generate_content(
-                model="gemini-2.5-flash", 
+                model="gemini-2.5-flash",
                 contents=f"{sys_prompt}\n\nUser Question: {prompt}"
             )
-            
             st.session_state.messages.append({"role": "assistant", "content": response.text})
             st.rerun()
-            
+
         except Exception as e:
             error_str = str(e)
             if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
                 error_msg = "**System Alert: API Quota Exhausted.** The Gemini API daily limit has been reached. The Databricks allocation engine continues to operate."
             else:
                 error_msg = f"**System Alert:** {error_str}"
-                
             st.session_state.messages.append({"role": "assistant", "content": error_msg})
             st.rerun()
