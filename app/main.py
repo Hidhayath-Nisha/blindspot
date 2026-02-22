@@ -1107,7 +1107,7 @@ def render_navbar(df):
   var pages = [
     ['command_center',      'Dashboard',   'nav_home'],
     ['crisis_detail',       'Deep Dive',      'nav_cd'],
-    ['allocation_simulator','Optimizer',   'nav_alloc'],
+    ['allocation_simulator','Aid Allocator',   'nav_alloc'],
     ['methodology',         'Support', 'nav_meth'],
   ];
 
@@ -2137,33 +2137,6 @@ def page_allocation_simulator(df):
     if st.session_state.opt_result is not None:
         df_opt = st.session_state.opt_result.copy()
         df_opt['Country_Name'] = df_opt['iso3'].map(COUNTRY_NAMES).fillna(df_opt['iso3'])
-
-        opt_lives = int(df_opt['Projected_Lives_Saved'].sum())
-        bsf = (df_opt['Crisis_Severity_Score'] / 10) ** 2
-        base_c = (50000 / (bsf + 0.1)).values
-        aps = (df_opt['fatalities'] / max(df_opt['fatalities'].max(), 1)).values
-        cur_lives = int(sum(
-            diminishing_returns_curve(row['funding_received'], base_c[i], aps[i])
-            for i, (_, row) in enumerate(df_opt.iterrows())
-        ))
-        gap_lives = max(0, opt_lives - cur_lives)
-
-        # Impact boxes
-        ib1, ib2, ib3 = st.columns(3, gap="medium")
-        for col, num, lbl, color, bc in [
-            (ib1, cur_lives, "Lives Saved (Current)",      MUTED,  DIM),
-            (ib2, opt_lives, "Lives Saved (Optimized)",      GREEN,  f"{GREEN}40"),
-            (ib3, gap_lives, "Lives Lost to Misallocation",       RED,    f"{RED}40"),
-        ]:
-            with col:
-                st.markdown(f"""
-                <div class="impact-box" style="border-color:{bc};">
-                    <span class="ib-num" style="color:{color};">{num:,}</span>
-                    <span class="ib-label">{lbl}</span>
-                </div>
-                """, unsafe_allow_html=True)
-
-        st.markdown('<div style="height:28px;"></div>', unsafe_allow_html=True)
 
         # Sankey
         sk_l, sk_r = st.columns(2, gap="medium")
