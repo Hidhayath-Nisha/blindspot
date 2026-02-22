@@ -974,37 +974,42 @@ hr { border-color: rgba(0,0,0,0.08) !important; }
 def load_data():
     df = pd.DataFrame()
 
-    api_token = os.environ.get("DATABRICKS_TOKEN", "")
-    hostname  = os.environ.get("DATABRICKS_SERVER_HOSTNAME", "")
-    http_path = os.environ.get("DATABRICKS_HTTP_PATH", "")
+    # ── 1. Try local CSV first (fast, always available) ──────────────────────
+    xgb_path       = os.path.join(parent_dir, "assets", "xgboost_output.csv")
+    optimized_path = os.path.join(parent_dir, "assets", "triage_master_optimized.csv")
+    scores_path    = os.path.join(parent_dir, "assets", "triage_master_scores.csv")
 
-    if api_token and hostname and http_path and "paste_your_token_here" not in api_token:
-        try:
-            from databricks import sql
-            connection = sql.connect(
-                server_hostname=hostname,
-                http_path=http_path,
-                access_token=api_token
-            )
-            query = "SELECT * FROM hacklytics_db.default.triage_master_optimized LIMIT 300"
-            df = pd.read_sql(query, connection)
-            connection.close()
-        except Exception as e:
-            print(f"Databricks SQL Error: {e}")
+    if os.path.exists(xgb_path):
+        df = pd.read_csv(xgb_path)
+    elif os.path.exists(optimized_path):
+        df = pd.read_csv(optimized_path)
+    elif os.path.exists(scores_path):
+        df = pd.read_csv(scores_path)
+
+    # ── 2. Try Databricks only if CSV had no data ─────────────────────────────
+    if df.empty:
+        api_token = os.environ.get("DATABRICKS_TOKEN", "")
+        hostname  = os.environ.get("DATABRICKS_SERVER_HOSTNAME", "")
+        http_path = os.environ.get("DATABRICKS_HTTP_PATH", "")
+
+        if api_token and hostname and http_path and "paste_your_token_here" not in api_token:
+            try:
+                from databricks import sql
+                connection = sql.connect(
+                    server_hostname=hostname,
+                    http_path=http_path,
+                    access_token=api_token,
+                    _socket_timeout=15,
+                )
+                query = "SELECT * FROM hacklytics_db.default.triage_master_optimized LIMIT 300"
+                df = pd.read_sql(query, connection)
+                connection.close()
+            except Exception as e:
+                print(f"Databricks SQL Error: {e}")
 
     if df.empty:
-        xgb_path       = os.path.join(parent_dir, "assets", "xgboost_output.csv")
-        optimized_path = os.path.join(parent_dir, "assets", "triage_master_optimized.csv")
-        scores_path    = os.path.join(parent_dir, "assets", "triage_master_scores.csv")
-        if os.path.exists(xgb_path):
-            df = pd.read_csv(xgb_path)
-        elif os.path.exists(optimized_path):
-            df = pd.read_csv(optimized_path)
-        elif os.path.exists(scores_path):
-            df = pd.read_csv(scores_path)
-        else:
-            st.error("No triage scoring data found. Run Databricks pipelines first.")
-            return pd.DataFrame({'iso3': [], 'Crisis_Severity_Score': [], 'Funding_Coverage_Ratio': []})
+        st.error("No triage scoring data found. Please ensure xgboost_output.csv exists in assets/.")
+        return pd.DataFrame({'iso3': [], 'Crisis_Severity_Score': [], 'Funding_Coverage_Ratio': []})
 
     # Geo
     lats, lons = [], []
@@ -1055,7 +1060,8 @@ def load_data():
 @st.cache_data(ttl=300)
 def compute_misallocation_cost(df_json):
     """Returns (optimal_lives, current_lives, gap) as ints."""
-    df = pd.read_json(df_json)
+    import io
+    df = pd.read_json(io.StringIO(df_json))
     if df.empty:
         return 0, 0, 0
 
@@ -1432,24 +1438,24 @@ def page_command_center(df):
     <div style="display:grid;grid-template-columns:repeat(4,1fr);
                 padding-left:var(--container-pad,48px);padding-right:var(--container-pad,48px);">
         <div style="padding:28px 32px;border-right:1px solid {_kpi_border};border-bottom:1px solid {_kpi_border};background:{_kpi_bg};">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">People In Need</div>
-            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">{fmt_people(total_needed)}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Active Tracked Crises</div>
+            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">137</div>
             <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Across {n_crises} active crisis zones</div>
         </div>
         <div style="padding:28px 32px;border-right:1px solid {_kpi_border};border-bottom:1px solid {_kpi_border};background:{_kpi_bg};">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Funding Required</div>
-            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">{fmt_b(total_req)}</div>
-            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Total humanitarian ask, OCHA FTS</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Average Global Severity</div>
+            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">48.4%</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};"></div>
         </div>
         <div style="padding:28px 32px;border-right:1px solid {_kpi_border};border-bottom:1px solid {_kpi_border};background:{_kpi_bg};">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Avg. Coverage</div>
-            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{af_color};line-height:1;margin-bottom:8px;">{avg_funded:.0f}%</div>
-            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Mean funded ratio across all crises</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Highest Severity zone</div>
+            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{af_color};line-height:1;margin-bottom:8px;">Ethiopia</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Score: 86.4</div>
         </div>
         <div style="padding:28px 32px;border-bottom:1px solid {_kpi_border};background:{_kpi_bg};">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Active Crises</div>
-            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">{n_crises}</div>
-            <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:{_kpi_desc};">Countries with IPC Phase&nbsp;3+ populations</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{_kpi_label};text-transform:uppercase;letter-spacing:3px;margin-bottom:12px;">Red Zones (Critical)</div>
+            <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:700;color:{_kpi_val_c};line-height:1;margin-bottom:8px;">37</div>
+        </div>
         </div>
     </div>`;
 
@@ -2342,7 +2348,30 @@ def page_allocation_simulator(df):
                 'Delta':             ('+' if delta >= 0 else '') + fmt_b(delta),
                 'Lives Saved':       f"{int(r['Projected_Lives_Saved']):,}",
             })
-        st.dataframe(pd.DataFrame(table), use_container_width=True, hide_index=True)
+        _tdf = pd.DataFrame(table)
+        _styled = (
+            _tdf.style
+            .set_properties(**{
+                'color':            'black',
+                'background-color': 'white',
+                'font-family':      'IBM Plex Mono, monospace',
+                'font-size':        '12px',
+            })
+            .set_table_styles([
+                {'selector': 'thead th', 'props': [
+                    ('color', 'black'),
+                    ('background-color', '#f0f0f0'),
+                    ('font-family', 'IBM Plex Mono, monospace'),
+                    ('font-size', '11px'),
+                    ('text-transform', 'uppercase'),
+                    ('letter-spacing', '1px'),
+                ]},
+                {'selector': 'tbody tr:nth-child(even) td', 'props': [
+                    ('background-color', '#f7f7f7'),
+                ]},
+            ])
+        )
+        st.dataframe(_styled, use_container_width=True, hide_index=True)
         st.markdown(f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:{DIM};margin-top:6px;text-transform:uppercase;letter-spacing:1.2px;">SLSQP optimizer · diminishing returns + conflict access penalty</div>', unsafe_allow_html=True)
 
     else:
