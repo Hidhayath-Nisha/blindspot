@@ -631,8 +631,8 @@ components.html("""
     })();
 
     /* Hover effects */
-    var LIFT_SEL = '.triage-row,.kpi-pill,.metric-summary,.impact-box,.tech-card,.rag-card,.identity-card,.metric-cell';
-    var RING_SEL = 'a,button,[role="button"],.bs-nav-item,.bs-toggle,h1,h2,h3';
+    var LIFT_SEL = '.triage-row,.kpi-pill,.metric-summary,.impact-box,.tech-card,.rag-card,.identity-card,.metric-cell,.persona-card,.brief-card,.stat-card,[data-testid="stMetric"]';
+    var RING_SEL = 'a,button,[role="button"],.bs-nav-item,.bs-toggle,h1,h2,h3,select,input,textarea,[data-testid="stSelectbox"],[data-testid="stButton"],[data-testid="stTextInput"],[data-testid="stTextArea"],[data-testid="stTab"]';
 
     pd.addEventListener('mouseover', function (e) {
         var lift = e.target.closest(LIFT_SEL);
@@ -1555,8 +1555,8 @@ def page_command_center(df):
 <div id="g"></div>
 <div id="tip"></div>
 <div id="legend">
-  <span class="lc" style="background:#FF2020"></span>Critical (&gt;80)&nbsp;&nbsp;
-  <span class="lc" style="background:#E83D3D"></span>High (60–80)&nbsp;&nbsp;
+  <span class="lc" style="background:#E53935"></span>Critical (&gt;80)&nbsp;&nbsp;
+  <span class="lc" style="background:#E53935"></span>High (60–80)&nbsp;&nbsp;
   <span class="lc" style="background:#F0A500"></span>Elevated (40–60)&nbsp;&nbsp;
   <span class="lc" style="background:#0DB37A"></span>Moderate (20–40)&nbsp;&nbsp;
   <span class="lc" style="background:#2D74DA"></span>Low (&lt;20)
@@ -1578,14 +1578,23 @@ const world = Globe()(cont)
   .globeImageUrl('')
   .atmosphereColor('{_globe_atm}')
   .atmosphereAltitude(0.15)
-  // ── crisis markers ──
+  // ── pulsing ring crisis markers ──
+  .ringsData(DATA)
+  .ringLat(d => d.lat)
+  .ringLng(d => d.lng)
+  .ringColor(d => t => d.color + Math.round((1 - t) * 210).toString(16).padStart(2, '0'))
+  .ringMaxRadius(d => Math.max(1.5, d.radius * 22))
+  .ringPropagationSpeed(1.8)
+  .ringRepeatPeriod(d => 900 + (1 - Math.min(1, d.radius * 2)) * 1200)
+  .ringStroke(0.6)
+  // ── flat center dots for hover ──
   .pointsData(DATA)
   .pointLat(d => d.lat)
   .pointLng(d => d.lng)
   .pointColor(d => d.color)
-  .pointRadius(d => d.radius)
-  .pointAltitude(d => d.altitude)
-  .pointResolution(14)
+  .pointRadius(d => Math.max(0.3, d.radius * 0.7))
+  .pointAltitude(0)
+  .pointResolution(10)
   .pointLabel(d => '')
   .onPointHover((pt) => {{
     if (pt) {{
@@ -1638,7 +1647,7 @@ const controls = world.controls();
 controls.enableDamping   = true;
 controls.dampingFactor   = 0.08;
 controls.autoRotate      = true;
-controls.autoRotateSpeed = 0.7;
+controls.autoRotateSpeed = 0.18;
 controls.enableZoom      = true;
 controls.zoomSpeed       = 1.2;
 controls.minDistance     = 150;
@@ -1648,7 +1657,7 @@ let overGlobe = false;
 cont.addEventListener('mouseenter', () => {{ overGlobe = true; }});
 cont.addEventListener('mouseleave', () => {{
   overGlobe = false;
-  controls.autoRotateSpeed = 0.7;
+  controls.autoRotateSpeed = 0.18;
 }});
 
 let _isDragging = false;
@@ -1660,7 +1669,7 @@ cont.addEventListener('mousemove', e => {{
   const rect = cont.getBoundingClientRect();
   const nx = (e.clientX - rect.left) / rect.width  * 2 - 1;
   const ny = (e.clientY - rect.top)  / rect.height * 2 - 1;
-  controls.autoRotateSpeed = nx * 4.0;
+  controls.autoRotateSpeed = nx * 0.9;
   if (!_isDragging) {{
     const pov = world.pointOfView();
     const tLat = Math.max(-80, Math.min(80, pov.lat - ny * 0.5));
